@@ -28,12 +28,13 @@ jobs:
       CI: "true"
       BHAGIRATH_TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/bhagirath_test?sslmode=disable
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
-          go-version-file: go.mod
+          go-version: "1.26.x"
+          check-latest: true
       - name: gofmt
         run: test -z "$(gofmt -l .)" || (gofmt -l . && exit 1)
       - name: go vet
@@ -50,7 +51,7 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: build image
         run: docker build -t bhagirath:ci .
       - name: smoke test
