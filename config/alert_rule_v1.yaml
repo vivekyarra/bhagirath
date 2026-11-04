@@ -1,0 +1,62 @@
+# Bhagirath alert rule — version 1.
+#
+# FROZEN. This file is tagged `rule-v1-frozen` in git BEFORE any outbreak
+# timeline (Indore or otherwise) was collected for the backtest. Never edit it.
+# Changing the rule means creating alert_rule_v2.yaml with a new version and a
+# new commit. CI fails if this file's SHA-256 changes (internal/rule/frozen_test.go).
+#
+# Alert decisions are made by this deterministic rule, never by an LLM, so the
+# system is auditable and the backtest is honest (spec Sections 5 and 8).
+#
+# Every interpretation choice that the spec leaves open is written down here,
+# and each one is the CONSERVATIVE choice (it can only make the rule fire
+# later or less often, never earlier).
+
+version: v1
+
+complaint_cluster:            # Signal C
+  issue_types: [dirty_water, foul_smell, sewage_mixing]
+  window_days: 14
+  min_complaints: 3
+  min_distinct_reporters: 3
+  # "within 300 m of each other" is read strictly: every pair of complaints in
+  # the cluster must be within this distance (not "within 300 m of a centre").
+  pairwise_radius_m: 300
+  # Complaints with no geocoded point (ward-level only) cannot prove they are
+  # within 300 m of anything, so they never count toward a spatial cluster.
+  # They still count toward the stale-complaint condition below.
+  unlocated_count_toward_cluster: false
+  # Complaints with no reporter identity (anonymous web form) are all treated
+  # as ONE reporter, so one person cannot fake a cluster by submitting thrice.
+  anonymous_reporters_are_one: true
+  # "OR any such complaint open longer than 7 days without verified fix."
+  # A complaint marked fixed by an official but not verified by the
+  # complainant is still open for this purpose (that is the Indore failure).
+  stale_open_days: 7
+  # A complaint whose fix was VERIFIED (evidence + complainant confirmation)
+  # at or before the evaluation time no longer counts toward the cluster.
+  exclude_verified_fixed: true
+
+test_failure:                 # Signal T
+  window_days: 30
+  # A contaminated result is cleared only by a LATER passing test of the same
+  # parameter in the same ward, sampled no later than the evaluation time.
+  retest_same_parameter: true
+
+illness_cluster:              # Signal I
+  window_hours: 72
+  min_cases: 3
+  # Reports carry separate diarrhoea and vomiting counts and one patient may
+  # appear in both. Conservative: a report contributes max(diarrhoea, vomiting),
+  # never the sum.
+  cases_per_report: max
+  ors:
+    multiplier: 2.0           # ORS sales >= 2x the chemist's own average
+    baseline_days: 28         # "4-week average"
+    min_baseline_reports: 7   # need at least a week of history to have an average
+    window_hours: 72          # an ORS spike counts if reported in the last 72 h
+
+levels:
+  # Watch: exactly one of C, T, I.  Warning: any two.
+  # Critical: all three, OR I + (C or T) with at least this many illness cases.
+  critical_min_illness_cases: 5
