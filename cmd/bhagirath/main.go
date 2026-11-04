@@ -64,7 +64,7 @@ func run(args []string) error {
 
 func serve(ctx context.Context, cfg *config.Config) error {
 	log := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	st, err := store.Open(ctx, cfg.DatabaseURL)
+	st, err := store.OpenWithRetry(ctx, cfg.DatabaseURL, 90*time.Second)
 	if err != nil {
 		return err
 	}

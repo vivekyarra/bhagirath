@@ -59,6 +59,28 @@ func Open(ctx context.Context, url string) (*Store, error) {
 	return &Store{pool: pool, q: pool}, nil
 }
 
+// OpenWithRetry retries Open with exponential backoff until ctx expires or
+// the budget is spent; containers often start before their database is ready.
+func OpenWithRetry(ctx context.Context, url string, budget time.Duration) (*Store, error) {
+	deadline := time.Now().Add(budget)
+	wait := 500 * time.Millisecond
+	for {
+		s, err := Open(ctx, url)
+		if err == nil {
+			return s, nil
+		}
+		if time.Now().Add(wait).After(deadline) {
+			return nil, err
+		}
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-time.After(wait):
+		}
+		wait = min(wait*2, 5*time.Second)
+	}
+}
+
 // Close releases the pool.
 func (s *Store) Close() {
 	if s.pool != nil && !s.inTx {

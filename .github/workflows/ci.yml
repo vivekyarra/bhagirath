@@ -58,7 +58,7 @@ jobs:
         run: |
           docker network create bh
           docker run -d --name db --network bh -e POSTGRES_PASSWORD=pw -e POSTGRES_DB=bhagirath postgres:16-alpine
-          for i in $(seq 1 30); do docker exec db pg_isready -U postgres && break; sleep 1; done
+          for i in $(seq 1 30); do docker exec db pg_isready -h 127.0.0.1 -U postgres && break; sleep 1; done
           docker run -d --name app --network bh -p 8080:8080 \
             -e DATABASE_URL=postgres://postgres:pw@db:5432/bhagirath?sslmode=disable bhagirath:ci
           for i in $(seq 1 30); do curl -fsS localhost:8080/healthz && exit 0; sleep 1; done
