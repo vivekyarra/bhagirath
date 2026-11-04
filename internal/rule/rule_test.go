@@ -399,3 +399,44 @@ func mustRead(t *testing.T) []byte {
 	}
 	return b
 }
+
+// TestClusterExistenceMatchesBruteForce checks the fast cluster search against
+// an exhaustive O(n³) search on thousands of random small wards.
+func TestClusterExistenceMatchesBruteForce(t *testing.T) {
+	r := load(t)
+	seed := uint64(42)
+	rnd := func(n int) int { seed = seed*6364136223846793005 + 1442695040888963407; return int((seed >> 33) % uint64(n)) }
+	for trial := 0; trial < 3000; trial++ {
+		n := 3 + rnd(9)
+		var cs []ComplaintSignal
+		for i := 0; i < n; i++ {
+			rep := fmt.Sprint("r", rnd(4))
+			if rnd(6) == 0 {
+				rep = ""
+			}
+			cs = append(cs, cmp(fmt.Sprint(i), rep, domain.IssueDirtyWater, float64(rnd(24*6)), pt(float64(rnd(700)), float64(rnd(700)))))
+		}
+		got := r.Evaluate(Snapshot{Complaints: cs}, now).C.Cluster
+		want := false
+		key := func(c ComplaintSignal) string {
+			if c.Reporter == "" {
+				return "anon"
+			}
+			return c.Reporter
+		}
+		for i := 0; i < n && !want; i++ {
+			for j := i + 1; j < n && !want; j++ {
+				for k := j + 1; k < n && !want; k++ {
+					a, b, c := cs[i], cs[j], cs[k]
+					if distance(*a.Point, *b.Point) <= 300 && distance(*a.Point, *c.Point) <= 300 && distance(*b.Point, *c.Point) <= 300 &&
+						key(a) != key(b) && key(a) != key(c) && key(b) != key(c) {
+						want = true
+					}
+				}
+			}
+		}
+		if got != want {
+			t.Fatalf("trial %d: fast=%v brute=%v", trial, got, want)
+		}
+	}
+}

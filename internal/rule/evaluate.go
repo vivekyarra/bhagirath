@@ -220,11 +220,16 @@ func (r *Rule) distinctReporters(cs []ComplaintSignal) int {
 	return len(seen)
 }
 
-// bestCluster finds, among all maximal sets of complaints that are pairwise
-// within the radius (maximal cliques, Bron-Kerbosch with pivoting), the one
-// with the most distinct reporters that satisfies both minimums. A maximal
-// clique satisfies the minimums whenever any subset of it does, so checking
-// maximal cliques is exact.
+// bestCluster returns a set of complaints that are pairwise within the
+// radius and satisfy both minimums, or nil if none exists.
+//
+// Existence is decided exactly. With the v1 thresholds (3 complaints, 3
+// households) a qualifying set exists iff there is a triangle of pairwise-close
+// complaints from three distinct households, found in O(n·d²). For other
+// thresholds the exact Bron–Kerbosch search over maximal cliques is used. The
+// returned set (for the reason text) is then grown greedily from the valid
+// seeds, so it reports at least as many households as the seed, never more
+// than truly exist.
 func (r *Rule) bestCluster(pts []ComplaintSignal) []ComplaintSignal {
 	cfg := r.ComplaintCluster
 	n := len(pts)
@@ -232,40 +237,148 @@ func (r *Rule) bestCluster(pts []ComplaintSignal) []ComplaintSignal {
 		return nil
 	}
 	adj := make([][]bool, n)
+	nb := make([][]int, n)
 	for i := range adj {
 		adj[i] = make([]bool, n)
 	}
 	for i := 0; i < n; i++ {
 		for j := i + 1; j < n; j++ {
 			ok := pts[i].Point == nil || pts[j].Point == nil || geo.DistanceM(*pts[i].Point, *pts[j].Point) <= cfg.PairwiseRadiusM
-			adj[i][j], adj[j][i] = ok, ok
+			if ok {
+				adj[i][j], adj[j][i] = true, true
+				nb[i] = append(nb[i], j)
+				nb[j] = append(nb[j], i)
+			}
 		}
+	}
+	keys := make([]string, n)
+	for i, p := range pts {
+		keys[i] = r.reporterKey(p)
+	}
+	var seeds [][]int
+	if cfg.MinComplaints <= 3 && cfg.MinDistinctReporters <= 3 {
+		seeds = triangleSeeds(nb, adj, keys, cfg.MinDistinctReporters, 64)
+	} else {
+		seeds = r.cliqueSeeds(pts, adj)
 	}
 	var best []int
 	bestR := 0
-	consider := func(clique []int) {
-		if len(clique) < cfg.MinComplaints {
-			return
+	for _, seed := range seeds {
+		c := grow(seed, nb, adj, keys)
+		dr := distinct(c, keys)
+		if len(c) < cfg.MinComplaints || dr < cfg.MinDistinctReporters {
+			continue
 		}
-		cs := make([]ComplaintSignal, len(clique))
-		for i, k := range clique {
-			cs[i] = pts[k]
-		}
-		dr := r.distinctReporters(cs)
-		if dr < cfg.MinDistinctReporters {
-			return
-		}
-		if dr > bestR || (dr == bestR && len(clique) > len(best)) {
-			best, bestR = append([]int(nil), clique...), dr
+		if dr > bestR || (dr == bestR && len(c) > len(best)) {
+			best, bestR = c, dr
 		}
 	}
+	if best == nil {
+		return nil
+	}
+	sort.Ints(best)
+	out := make([]ComplaintSignal, len(best))
+	for i, k := range best {
+		out[i] = pts[k]
+	}
+	return out
+}
+
+func distinct(idx []int, keys []string) int {
+	seen := map[string]bool{}
+	for _, i := range idx {
+		seen[keys[i]] = true
+	}
+	return len(seen)
+}
+
+// triangleSeeds finds up to limit triangles (one per anchor) whose members
+// come from at least minR distinct households.
+func triangleSeeds(nb [][]int, adj [][]bool, keys []string, minR, limit int) [][]int {
+	var out [][]int
+	for i := range nb {
+	anchor:
+		for _, j := range nb[i] {
+			if j <= i {
+				continue
+			}
+			for _, k := range nb[i] {
+				if k <= j || !adj[j][k] {
+					continue
+				}
+				d := 1
+				if keys[j] != keys[i] {
+					d++
+				}
+				if keys[k] != keys[i] && keys[k] != keys[j] {
+					d++
+				}
+				if d >= minR {
+					out = append(out, []int{i, j, k})
+					break anchor
+				}
+			}
+		}
+		if len(out) >= limit {
+			break
+		}
+	}
+	return out
+}
+
+// grow extends a clique greedily, preferring complaints from new households.
+func grow(seed []int, nb [][]int, adj [][]bool, keys []string) []int {
+	c := append([]int(nil), seed...)
+	in := map[int]bool{}
+	have := map[string]bool{}
+	for _, x := range c {
+		in[x] = true
+		have[keys[x]] = true
+	}
+	cands := append([]int(nil), nb[seed[0]]...)
+	sort.SliceStable(cands, func(a, b int) bool {
+		na, nb2 := !have[keys[cands[a]]], !have[keys[cands[b]]]
+		if na != nb2 {
+			return na
+		}
+		return cands[a] < cands[b]
+	})
+	for _, v := range cands {
+		if in[v] {
+			continue
+		}
+		ok := true
+		for _, u := range c {
+			if !adj[u][v] {
+				ok = false
+				break
+			}
+		}
+		if ok {
+			c = append(c, v)
+			in[v] = true
+			have[keys[v]] = true
+		}
+	}
+	return c
+}
+
+// cliqueSeeds enumerates maximal cliques exactly (Bron–Kerbosch with pivot)
+// for thresholds above three; bounded to keep evaluation predictable.
+func (r *Rule) cliqueSeeds(pts []ComplaintSignal, adj [][]bool) [][]int {
+	n := len(pts)
+	var out [][]int
 	var bk func(rset, p, x []int)
 	bk = func(rset, p, x []int) {
-		if len(p) == 0 && len(x) == 0 {
-			consider(rset)
+		if len(out) >= 4096 {
 			return
 		}
-		// Pivot: vertex in P∪X with most neighbours in P.
+		if len(p) == 0 && len(x) == 0 {
+			if len(rset) >= r.ComplaintCluster.MinComplaints {
+				out = append(out, append([]int(nil), rset...))
+			}
+			return
+		}
 		pivot, deg := -1, -1
 		for _, u := range append(append([]int{}, p...), x...) {
 			d := 0
@@ -306,14 +419,6 @@ func (r *Rule) bestCluster(pts []ComplaintSignal) []ComplaintSignal {
 		all[i] = i
 	}
 	bk(nil, all, nil)
-	if best == nil {
-		return nil
-	}
-	sort.Ints(best)
-	out := make([]ComplaintSignal, len(best))
-	for i, k := range best {
-		out[i] = pts[k]
-	}
 	return out
 }
 
