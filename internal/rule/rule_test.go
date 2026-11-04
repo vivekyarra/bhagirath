@@ -405,7 +405,10 @@ func mustRead(t *testing.T) []byte {
 func TestClusterExistenceMatchesBruteForce(t *testing.T) {
 	r := load(t)
 	seed := uint64(42)
-	rnd := func(n int) int { seed = seed*6364136223846793005 + 1442695040888963407; return int((seed >> 33) % uint64(n)) }
+	rnd := func(n int) int {
+		seed = seed*6364136223846793005 + 1442695040888963407
+		return int((seed >> 33) % uint64(n))
+	}
 	for trial := 0; trial < 3000; trial++ {
 		n := 3 + rnd(9)
 		var cs []ComplaintSignal
