@@ -1,0 +1,15 @@
+/bin/
+/dist/
+*.test
+*.out
+coverage.*
+.env
+.env.*
+!.env.example
+config/*.local.yaml
+/data/
+*.wav
+*.ogg
+*.mp3
+*.m4a
+.DS_Store

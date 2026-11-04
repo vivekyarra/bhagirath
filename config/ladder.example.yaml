@@ -1,0 +1,113 @@
+# Demo pilot definition — FICTIONAL wards and officials only.
+#
+# For a real pilot, copy this file to config/ladder.local.yaml (git-ignored),
+# replace wards with the partner's real boundaries and landmarks, and add
+# officials ONLY from public sources or with the partner. If an official has
+# no direct contact, set grievance_channel (e.g. "CM Helpline 181") and the
+# partner records the grievance number on the dashboard.
+
+deadlines_hours:       # Section 8.2 of the spec
+  watch: 72
+  warning: 48
+  critical: 24
+complaint_deadline_hours: 72
+
+wards:
+  - id: demo-urban-12
+    name: "Demo Ward 12 (fictional)"
+    city_or_block: "Demo City"
+    district: "Demo District"
+    state: "Madhya Pradesh"
+    default_language: hi
+    partner_name: "Demo Residents' Association"
+    demo: true
+    polygon:  # [lat, lon]
+      - [22.7160, 75.8560]
+      - [22.7232, 75.8560]
+      - [22.7236, 75.8640]
+      - [22.7164, 75.8644]
+    landmarks:
+      - name: "Shiv Mandir"
+        aliases: ["shiv mandir", "शिव मंदिर", "mandir", "मंदिर", "temple"]
+        at: [22.7205, 75.8590]
+      - name: "Government Girls School"
+        aliases: ["school", "स्कूल", "सरकारी स्कूल", "girls school", "kanya shala", "कन्या शाला"]
+        at: [22.7178, 75.8620]
+      - name: "Overhead Water Tank"
+        aliases: ["water tank", "tanki", "टंकी", "पानी की टंकी", "overhead tank"]
+        at: [22.7222, 75.8625]
+      - name: "Ration Shop"
+        aliases: ["ration shop", "ration dukan", "राशन दुकान", "राशन की दुकान"]
+        at: [22.7190, 75.8575]
+
+  - id: demo-village-3
+    name: "Demo Village 3 (fictional)"
+    city_or_block: "Demo Block"
+    district: "Demo District"
+    state: "Madhya Pradesh"
+    default_language: hi
+    partner_name: "Demo Water NGO"
+    demo: true
+    polygon:
+      - [22.5960, 75.6960]
+      - [22.6040, 75.6960]
+      - [22.6040, 75.7050]
+      - [22.5960, 75.7050]
+    landmarks:
+      - name: "Panchayat Bhawan"
+        aliases: ["panchayat", "पंचायत", "पंचायत भवन", "panchayat bhavan"]
+        at: [22.6000, 75.7000]
+      - name: "Hand Pump near Anganwadi"
+        aliases: ["handpump", "hand pump", "हैंडपंप", "आंगनवाड़ी", "anganwadi"]
+        at: [22.5985, 75.7020]
+
+officials:
+  - name: "Demo Assistant Engineer"
+    role: "Assistant Engineer, Water Supply"
+    department: "Municipal Corporation (demo)"
+    wards: [demo-urban-12]
+    level: "1"
+    email: "ae.demo@example.org"
+  - name: "Demo Executive Engineer"
+    role: "Executive Engineer, Water Supply"
+    department: "Municipal Corporation (demo)"
+    wards: [demo-urban-12]
+    level: "2"
+    email: "ee.demo@example.org"
+  - name: "Demo Zonal Commissioner"
+    role: "Zonal Officer / Commissioner"
+    department: "Municipal Corporation (demo)"
+    wards: [demo-urban-12, demo-village-3]
+    level: "3"
+    email: "commissioner.demo@example.org"
+  - name: "Demo CMHO"
+    role: "Chief Medical & Health Officer"
+    department: "District Health (demo)"
+    wards: [demo-urban-12, demo-village-3]
+    level: "H"
+    email: "cmho.demo@example.org"
+  - name: "Demo Ward Councillor"
+    role: "Ward Councillor + partner"
+    department: "Elected representative (demo)"
+    wards: [demo-urban-12]
+    level: "P"
+    email: "councillor.demo@example.org"
+  - name: "Demo JE, PHED"
+    role: "Junior Engineer, PHED"
+    department: "PHED (demo)"
+    wards: [demo-village-3]
+    level: "1"
+    grievance_channel: "CM Helpline 181 (demo)"
+    preferred_channel: grievance
+  - name: "Demo EE, PHED"
+    role: "Executive Engineer, PHED"
+    department: "PHED (demo)"
+    wards: [demo-village-3]
+    level: "2"
+    email: "ee.phed.demo@example.org"
+  - name: "Demo Sarpanch"
+    role: "Sarpanch + partner NGO"
+    department: "Gram Panchayat (demo)"
+    wards: [demo-village-3]
+    level: "P"
+    email: "sarpanch.demo@example.org"
