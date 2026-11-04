@@ -1,0 +1,18 @@
+{{define "content"}}{{$d := .Data}}
+<div class="stack">
+  <div class="spread"><h1>Review queue</h1>
+    <div class="card kpi" style="padding:8px 14px"><div class="l">Speech recognition measured on {{$d.ASRCount}} reviewed recordings</div><div class="v" style="font-size:1.3rem">WER {{if $d.WER}}{{printf "%.1f" (mul100 (derefF $d.WER))}}%{{else}}—{{end}}</div></div></div>
+  {{if $d.ByLang}}<div class="card"><h3>Error rate by language</h3><table class="data"><thead><tr><th>Language</th><th class="num">Recordings</th><th class="num">WER</th><th class="num">CER</th></tr></thead><tbody>{{range $d.ByLang}}<tr><td>{{langName .Lang}}</td><td class="num">{{.N}}</td><td class="num">{{printf "%.1f" (mul100 .Rates.WER)}}%</td><td class="num">{{printf "%.1f" (mul100 .Rates.CER)}}%</td></tr>{{end}}</tbody></table>
+    <p class="muted">WER/CER compare the machine transcript with the volunteer-corrected one (spec §16: 50+ real recordings, error rate published).</p></div>{{end}}
+  {{range $group := (slice2 $d.Need $d.Machine)}}{{range $group}}
+  <div class="card"><div class="spread"><h3><a href="/app/complaints/{{.Ref}}" class="mono">{{.Ref}}</a> · {{label .Channel}} · {{ist .CreatedAt}}</h3><span class="badge">{{label .TranscriptStatus}}</span></div>
+    {{if .AudioMediaID}}<audio controls preload="none" src="/app/media/{{deref .AudioMediaID}}"></audio>{{end}}
+    {{if $.CanOp}}<form method="post" action="/app/review/{{.Ref}}"><input type="hidden" name="csrf" value="{{$.CSRF}}">
+      <div class="field"><label>Transcript — type exactly what was said, in the original language</label><textarea name="transcript" lang="{{.Language}}">{{.Transcript}}</textarea></div>
+      <div class="row"><select name="issue_type" style="max-width:260px"><option value="">Auto-detect problem</option>{{range $d.IssueTypes}}<option value="{{.}}">{{issue .}}</option>{{end}}</select><button class="btn primary">Save transcript</button></div></form>{{end}}
+  </div>{{end}}{{end}}
+  {{if not (or $d.Need $d.Machine)}}<div class="card"><p>No recordings waiting. 🎉</p></div>{{end}}
+  <div class="card flush"><div class="head"><h2>Complaints that need a location ({{len $d.Unlocated}})</h2><small>Ward unknown or no point for clustering</small></div><table class="data"><tbody>
+    {{range $d.Unlocated}}{{$w := index $d.Wards .WardID}}<tr><td><a class="mono" href="/app/complaints/{{.Ref}}">{{.Ref}}</a></td><td>{{issue .IssueType}}</td><td>{{if $w.Name}}{{$w.Name}}{{else}}no ward{{end}} · {{label .LocationMethod}}</td><td>{{.LocationText}}</td></tr>{{else}}<tr><td class="muted">All located.</td></tr>{{end}}</tbody></table></div>
+</div>
+{{end}}

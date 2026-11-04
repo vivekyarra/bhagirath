@@ -1,0 +1,54 @@
+{{define "content"}}{{$d := .Data}}{{$c := $d.C}}{{$w := index $d.Wards $c.WardID}}
+<div class="stack">
+  <div class="spread"><div><small class="muted">{{label $c.Channel}} · {{ist $c.CreatedAt}}{{if $d.Reporter}} · reporter {{$d.Reporter.Ref}}{{end}}</small>
+    <h1>{{$c.Ref}} · {{issue $c.IssueType}}</h1></div>
+    <div><span class="badge st-{{$c.Status}}">{{label $c.Status}}</span> <span class="badge">severity {{$c.Severity}}/5</span>{{if $c.ReopenCount}} <span class="badge lvl-critical">reopened ×{{$c.ReopenCount}}</span>{{end}}</div></div>
+  <div class="grid g2">
+    <div class="card">
+      <h2>What the resident said</h2>
+      {{if $c.AudioMediaID}}<audio controls preload="none" src="/app/media/{{deref $c.AudioMediaID}}"></audio>{{end}}
+      {{if $c.Transcript}}<p class="transcript" lang="{{$c.Language}}">{{$c.Transcript}}</p>{{else}}<p class="note">Voice note waiting for a human transcript — <a href="/app/review">review queue</a>.</p>{{end}}
+      <p><strong>English summary:</strong> {{$c.DescriptionEN}}</p>
+      <p class="muted">Language {{langName $c.Language}} · transcript {{label $c.TranscriptStatus}} · extractor {{$d.Ex.Extract.Extractor}}{{if $d.Ex.Extract.Cues}} · cues: {{range $i, $x := $d.Ex.Extract.Cues}}{{if $i}}, {{end}}{{$x}}{{end}}{{end}}</p>
+      {{if $d.Rates}}<p class="muted">Speech recognition vs human transcript: WER {{printf "%.1f" (mul100 $d.Rates.WER)}}%, CER {{printf "%.1f" (mul100 $d.Rates.CER)}}%. Machine said: “{{$c.TranscriptASR}}”</p>{{end}}
+      {{if $d.Reporter}}<p class="muted">Household: language {{langName $d.Reporter.PreferredLanguage}} · contact by {{$d.Reporter.PreferredChannel}} · {{if $d.Reporter.ConsentAt}}consented to callbacks{{else if $d.Reporter.ConsentDeclined}}declined callbacks{{else}}consent pending{{end}}</p>{{else}}<p class="muted">Anonymous — no callbacks possible; fixes need a partner field check.</p>{{end}}
+    </div>
+    <div class="card">
+      <h2>Where</h2>
+      <p>{{if $w.Name}}<strong>{{$w.Name}}</strong>{{else}}<span class="badge lvl-warning">not resolved to a ward</span>{{end}} · {{label $c.LocationMethod}}{{if $c.LocationText}}<br>{{$c.LocationText}}{{end}}</p>
+      {{if $d.Ex.Location.Candidates}}<p class="note">Ambiguous landmark: {{range $d.Ex.Location.Candidates}}{{.}}; {{end}}</p>{{end}}
+      {{if $c.Point}}<div class="map short" data-pins='[{"Lat":{{$c.Point.Lat}},"Lon":{{$c.Point.Lon}},"Ref":"{{$c.Ref}}","Issue":"{{$c.IssueType}}"}]' data-ring="{{if $w.Polygon}}{{json (index $w.Polygon 0)}}{{else}}[]{{end}}"></div>{{end}}
+      {{if .CanOp}}<details {{if not $c.WardID}}open{{end}}><summary>Correct classification or location</summary>
+      <form method="post" action="/app/complaints/{{$c.Ref}}/update" style="margin-top:10px"><input type="hidden" name="csrf" value="{{.CSRF}}">
+        <div class="grid g2"><div class="field"><label>Problem</label><select name="issue_type">{{range $d.IssueTypes}}<option value="{{.}}" {{if eq . $c.IssueType}}selected{{end}}>{{issue .}}</option>{{end}}</select></div>
+        <div class="field"><label>Ward</label><select name="ward_id"><option value="">—</option>{{range $id, $x := $d.Wards}}<option value="{{$id}}" {{if eq $id $c.WardID}}selected{{end}}>{{$x.Name}}</option>{{end}}</select></div></div>
+        <p class="muted">Tap the map to set the exact point:</p>
+        <div id="pickmap" class="map short" data-lat="{{if $c.Point}}{{$c.Point.Lat}}{{else}}{{$w.Centroid.Lat}}{{end}}" data-lon="{{if $c.Point}}{{$c.Point.Lon}}{{else}}{{$w.Centroid.Lon}}{{end}}"></div>
+        <input type="hidden" id="lat" name="lat"><input type="hidden" id="lon" name="lon">
+        <label class="check" style="margin-top:8px"><input type="checkbox" name="invalid" value="1"> Mark as invalid (spam / not a water complaint)</label>
+        <p style="margin-top:8px"><button class="btn">Save</button></p></form></details>{{end}}
+    </div>
+  </div>
+  {{if $d.Pending}}<div class="card alert-card lvl-b-watch"><h2>Fix claimed — waiting for the resident</h2>
+    <p>Claimed {{ist $d.Pending.ClaimedAt}} by {{$d.Pending.ClaimedBy}} with {{$d.Pending.EvidenceType}} evidence{{if $d.Pending.EvidenceMediaID}} (<a href="/app/media/{{deref $d.Pending.EvidenceMediaID}}">photo</a>){{end}}. Callback attempts: {{$d.Pending.CallbackAttempts}}/3{{if $d.Pending.NextCallbackAt}}, next {{ist $d.Pending.NextCallbackAt}}{{end}}.</p>
+    {{if eq $d.Pending.CallbackChannel "field_visit_required"}}<p class="note">The resident cannot be called (no consent). A partner must check in person.</p>{{end}}
+    {{if .CanOp}}<form method="post" action="/app/closures/{{$d.Pending.ID}}/verify" class="row"><input type="hidden" name="csrf" value="{{.CSRF}}"><span>Field visit result:</span>
+      <button class="btn good" name="result" value="confirmed">Resident confirms fixed</button><button class="btn danger" name="result" value="denied">Still not fixed</button></form>{{end}}</div>{{end}}
+  {{if and .CanOp (or (eq (printf "%s" $c.Status) "escalated") (eq (printf "%s" $c.Status) "open") (eq (printf "%s" $c.Status) "reopened"))}}
+  <details class="card"><summary><strong>Record a fix claim on behalf of an official</strong></summary>
+    <form method="post" action="/app/complaints/{{$c.Ref}}/claim" enctype="multipart/form-data" style="margin-top:10px"><input type="hidden" name="csrf" value="{{.CSRF}}">
+      <div class="grid g2"><div class="field"><label>Claimed by</label><input type="text" name="claimed_by" placeholder="e.g. AE Water Supply, Zone 4"></div>
+      <div class="field"><label>Repair photo</label><input type="file" name="photo" accept="image/jpeg,image/png,image/webp"></div>
+      <div class="field"><label>Retest parameter</label><input type="text" name="retest_parameter" placeholder="optional, e.g. E. coli"></div>
+      <div class="field"><label>Retest result / limit / unit</label><div class="row"><input type="number" step="any" name="retest_value" placeholder="result" style="max-width:110px"><input type="number" step="any" name="retest_limit" placeholder="limit" style="max-width:110px"><input type="text" name="retest_unit" placeholder="unit" style="max-width:130px"></div></div></div>
+      <div class="field"><label>Note</label><input type="text" name="note"></div>
+      <button class="btn">Record claim → start resident verification</button></form></details>{{end}}
+  <div class="grid g2">
+    <div class="card flush"><div class="head"><h2>Escalations</h2></div><table class="data"><tbody>
+      {{range $d.Escalations}}{{$o := index $d.Officials .OfficialID}}<tr><td><a class="mono" href="/app/escalations/{{.Ref}}">{{.Ref}}</a><br><small>rung {{.Level}} · {{label .Reason}}</small></td><td>{{$o.Role}}</td><td><span class="badge out-{{.Outcome}}">{{label .Outcome}}</span>{{if eq (printf "%s" .Outcome) "pending"}}<br><span class="countdown" data-deadline="{{rfc3339 .DeadlineAt}}"></span>{{end}}</td></tr>{{else}}<tr><td class="muted">Not escalated yet{{if not $c.WardID}} — needs a ward{{end}}.</td></tr>{{end}}
+    </tbody></table></div>
+    <div class="card"><h2>Timeline</h2><ul class="timeline">{{range $d.Events}}<li><time>{{ist .At}}</time><span><strong>{{label .Action}}</strong> <small class="muted">{{.Actor}}</small></span></li>{{end}}
+      {{range $d.Closures}}<li><time>{{ist .ClaimedAt}}</time><span>Fix claimed ({{.EvidenceType}}) → <strong>{{label .CallbackResult}}</strong>{{if .Verified}} ✓{{end}}</span></li>{{end}}</ul></div>
+  </div>
+</div>
+{{end}}

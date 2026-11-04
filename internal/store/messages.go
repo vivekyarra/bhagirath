@@ -61,8 +61,8 @@ func (s *Store) DueMessages(ctx context.Context, now time.Time, limit int) ([]do
 
 // UpdateMessage writes delivery state.
 func (s *Store) UpdateMessage(ctx context.Context, m domain.OutboundMessage) error {
-	_, err := s.q.Exec(ctx, `UPDATE outbound_message SET status=$2, attempts=$3, provider_id=$4, error=$5, next_attempt_at=$6, sent_at=$7
-		WHERE id=$1`, m.ID, m.Status, m.Attempts, m.ProviderID, m.Error, m.NextAttemptAt, m.SentAt)
+	_, err := s.q.Exec(ctx, `UPDATE outbound_message SET status=$2, attempts=$3, provider_id=$4, error=$5, next_attempt_at=$6, sent_at=$7, link=$8
+		WHERE id=$1`, m.ID, m.Status, m.Attempts, m.ProviderID, m.Error, m.NextAttemptAt, m.SentAt, m.Link)
 	return err
 }
 

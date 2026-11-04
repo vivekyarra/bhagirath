@@ -1,0 +1,30 @@
+{{define "content"}}{{$d := .Data}}{{$a := $d.A}}{{$r := $d.Res}}
+<div class="stack">
+  <div class="card alert-card lvl-b-{{$a.Level}}">
+    <div class="spread"><div><span class="badge lvl-{{$a.Level}}">{{$a.Level.Title}}</span> <span class="badge">{{$a.Status}}</span> <small class="muted">peak {{$a.PeakLevel.Title}} · raised {{ist $a.TriggeredAt}}{{if $a.ResolvedAt}} · resolved {{ist $a.ResolvedAt}}{{end}}</small></div>
+    <small class="muted mono">rule {{$a.RuleVersion}} · {{printf "%.12s" $a.RuleSHA256}}</small></div>
+    <h1 style="margin-top:8px">{{$d.Ward.Name}}</h1>
+    <p class="reason">{{$a.ReasonText}}</p>{{if $a.ReasonLocal}}<p class="reason" lang="hi">{{$a.ReasonLocal}}</p>{{end}}
+    <div class="signals">
+      <div class="sig {{if $r.C.Fired}}on{{end}}"><b>C · Complaints</b>{{if $r.C.Cluster}}{{plural $r.C.ClusterHouseholds "household" "households"}} within {{printf "%.0f" $r.C.ClusterSpanM}} m in {{plural $r.C.ClusterDays "day" "days"}}{{else}}no 300 m cluster{{end}}{{if $r.C.Stale}}<br>{{len $r.C.StaleIDs}} open &gt; 7 days without verified fix (oldest {{$r.C.OldestStaleDays}} d){{end}}</div>
+      <div class="sig {{if $r.T.Fired}}on{{end}}"><b>T · Water tests</b>{{if $r.T.Fired}}{{plural (len $r.T.Failing) "failing sample" "failing samples"}} without a passing retest{{else}}no unresolved failure in 30 days{{end}}</div>
+      <div class="sig {{if $r.I.Fired}}on{{end}}"><b>I · Illness</b>{{$r.I.Cases}} cases in 72 h{{if $r.I.ORSSpikes}}; ORS spike ×{{(index $r.I.ORSSpikes 0).Ratio}}{{end}}</div>
+    </div>
+  </div>
+  <div class="grid g2">
+    <div class="card flush"><div class="head"><h2>Escalations</h2></div><div class="scroll"><table class="data"><thead><tr><th>Ref</th><th>Official</th><th>Rung</th><th>Deadline</th><th>Outcome</th></tr></thead><tbody>
+      {{range $d.Escalations}}{{$o := index $d.Officials .OfficialID}}<tr><td><a class="mono" href="/app/escalations/{{.Ref}}">{{.Ref}}</a><br><small>{{label .Reason}}</small></td><td>{{$o.Name}}<br><small>{{$o.Role}} · {{.Channel}}</small></td><td>{{.Level}}</td>
+      <td>{{if eq (printf "%s" .Outcome) "pending"}}<span class="countdown" data-deadline="{{rfc3339 .DeadlineAt}}"></span>{{else}}{{ist .DeadlineAt}}{{end}}</td><td><span class="badge out-{{.Outcome}}">{{label .Outcome}}</span></td></tr>{{end}}
+    </tbody></table></div></div>
+    <div class="card"><h2>Household advisories</h2>
+      {{if lt $a.Level 2}}<p class="muted">Advisories are sent only at Warning or Critical.</p>
+      {{else if $a.AdvisoryApprovedAt}}<p>Approved by {{$a.AdvisoryApprovedBy}} at {{ist $a.AdvisoryApprovedAt}}. Sent to <strong>{{len $d.Advisories}}</strong> households; delivered {{$d.Delivered}}.</p>
+      {{else}}<p>Precautionary messages are ready for every consenting registered household in {{$d.Ward.Name}}, each in its own language. {{if $d.SignoffRequired}}They need partner sign-off before sending.{{end}}</p>
+        {{if not $d.Reviewed}}<p class="note">Advisory text has not yet been reviewed by a health professional (BHAGIRATH_ADVISORY_REVIEWED_BY).{{if .Demo}} In the demo, messages are simulated.{{else}} Sending is blocked until it is.{{end}}</p>{{end}}
+        {{if and .CanOp (eq $a.Status "active")}}<form method="post" action="/app/alerts/{{$a.ID}}/approve" data-confirm="Send precautionary messages to all consenting households in this ward?"><input type="hidden" name="csrf" value="{{.CSRF}}"><button class="btn primary">Approve &amp; send advisories</button></form>{{end}}{{end}}
+      {{range $i, $x := $d.Advisories}}{{if lt $i 3}}<details><summary>{{langName $x.Language}} · {{$x.Channel}}{{if $x.Delivered}} · delivered{{end}}</summary><p lang="{{$x.Language}}">{{$x.Text}}</p></details>{{end}}{{end}}
+    </div>
+  </div>
+  <div class="card"><h2>History</h2><ul class="timeline">{{range $d.Transitions}}<li><time>{{ist .At}}</time><span><span class="badge lvl-{{.FromLevel}}">{{.FromLevel.Title}}</span> → <span class="badge lvl-{{.ToLevel}}">{{.ToLevel.Title}}</span> {{.ReasonText}}</span></li>{{end}}</ul></div>
+</div>
+{{end}}

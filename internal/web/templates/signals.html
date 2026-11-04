@@ -1,0 +1,36 @@
+{{define "content"}}{{$d := .Data}}
+<div class="stack">
+  <h1>Water tests &amp; illness signals</h1>
+  {{if .CanOp}}<div class="grid g3">
+    <form class="card" method="post" action="/app/signals/test"><input type="hidden" name="csrf" value="{{.CSRF}}"><h3>Add a water test</h3>
+      <div class="field"><label>Ward</label><select name="ward" required>{{range $d.WardList}}<option value="{{.ID}}">{{.Name}}</option>{{end}}</select></div>
+      <div class="field"><label>Source</label><select name="source">{{range $d.Sources}}<option value="{{.}}">{{label .}}</option>{{end}}</select></div>
+      <div class="field"><label>Sampled at</label><input type="datetime-local" name="sampled_at" value="{{$d.Today}}"></div>
+      <div class="field"><label>Parameter</label><input type="text" name="parameter" placeholder="E. coli / Total coliform / Nitrate" required></div>
+      <div class="row"><input type="number" step="any" name="value" placeholder="result" style="max-width:100px"><input type="number" step="any" name="limit" placeholder="limit" style="max-width:100px"><input type="text" name="unit" placeholder="unit" style="max-width:120px"></div>
+      <label class="check" style="margin-top:8px"><input type="checkbox" name="contaminated"> Contaminated / failed</label>
+      <div class="field" style="margin-top:8px"><label>Report link (optional)</label><input type="text" name="evidence_url"></div>
+      <button class="btn">Save test</button></form>
+    <form class="card" method="post" action="/app/signals/illness"><input type="hidden" name="csrf" value="{{.CSRF}}"><h3>Add an illness count</h3>
+      <div class="field"><label>Ward</label><select name="ward" required>{{range $d.WardList}}<option value="{{.ID}}">{{.Name}}</option>{{end}}</select></div>
+      <div class="field"><label>Reported by</label><select name="reporter_type"><option value="clinic">Clinic</option><option value="chemist">Chemist</option><option value="asha">ASHA / ANM</option><option value="hospital">Hospital</option></select></div>
+      <div class="field"><label>Date</label><input type="datetime-local" name="reported_at" value="{{$d.Today}}"></div>
+      <div class="row"><input type="number" min="0" name="diarrhoea" placeholder="diarrhoea" style="max-width:110px"><input type="number" min="0" name="vomiting" placeholder="vomiting" style="max-width:110px"><input type="number" min="0" name="ors" placeholder="ORS sold" style="max-width:110px"></div>
+      <p class="muted">Counts only — never patient names.</p><button class="btn">Save count</button></form>
+    <form class="card" method="post" action="/app/signals/reporter"><input type="hidden" name="csrf" value="{{.CSRF}}"><h3>Enrol a clinic, chemist or ASHA</h3>
+      <div class="field"><label>Type</label><select name="kind"><option value="clinic">Clinic</option><option value="chemist">Chemist</option><option value="asha">ASHA / ANM</option><option value="hospital">Hospital</option></select></div>
+      <div class="field"><label>Name of the facility</label><input type="text" name="label" required></div>
+      <div class="field"><label>WhatsApp number</label><input type="tel" name="phone" required></div>
+      <div class="field"><label>Ward</label><select name="ward">{{range $d.WardList}}<option value="{{.ID}}">{{.Name}}</option>{{end}}</select></div>
+      <input type="hidden" name="lang" value="hi"><p class="muted">They send one message a day like <code>D 3 V 1 ORS 12</code>.</p><button class="btn">Enrol</button></form>
+  </div>
+  <form class="card row" method="post" action="/app/signals/tests.csv" enctype="multipart/form-data"><input type="hidden" name="csrf" value="{{.CSRF}}"><strong>Import tests (CSV)</strong><input type="file" name="file" accept=".csv,text/csv" style="max-width:280px"><button class="btn small">Import</button><small class="muted">Columns: ward_id, sampled_at, parameter, value, limit, unit, contaminated, source, evidence_url (e.g. from the JJM WQMIS Citizen Corner)</small></form>{{end}}
+  <div class="grid g2">
+    <div class="card flush"><div class="head"><h2>Water tests</h2></div><div class="scroll"><table class="data"><thead><tr><th>Sampled</th><th>Ward</th><th>Parameter</th><th>Result</th><th></th></tr></thead><tbody>
+      {{range $d.Tests}}{{$w := index $d.Wards .WardID}}<tr><td>{{ist .SampledAt}}</td><td>{{$w.Name}}</td><td>{{.Parameter}}<br><small>{{label .Source}}</small></td><td class="num">{{if .Value}}{{.Value}}{{end}}{{if .LimitValue}} / {{.LimitValue}}{{end}} {{.Unit}}</td><td>{{if .IsContaminated}}<span class="badge lvl-critical">fail</span>{{else}}<span class="badge lvl-none">pass</span>{{end}}</td></tr>{{else}}<tr><td class="muted">None yet.</td></tr>{{end}}</tbody></table></div></div>
+    <div class="card flush"><div class="head"><h2>Illness reports</h2></div><div class="scroll"><table class="data"><thead><tr><th>When</th><th>Ward</th><th>From</th><th class="num">D</th><th class="num">V</th><th class="num">ORS</th></tr></thead><tbody>
+      {{range $d.Illness}}{{$w := index $d.Wards .WardID}}<tr><td>{{ist .ReportedAt}}</td><td>{{$w.Name}}</td><td>{{label .ReporterType}}</td><td class="num">{{.CasesDiarrhoea}}</td><td class="num">{{.CasesVomiting}}</td><td class="num">{{if .ORSUnitsSold}}{{.ORSUnitsSold}}{{end}}</td></tr>{{else}}<tr><td class="muted">None yet.</td></tr>{{end}}</tbody></table></div></div>
+  </div>
+  <div class="card flush"><div class="head"><h2>Enrolled signal contributors ({{len $d.Reporters}})</h2></div><table class="data"><tbody>{{range $d.Reporters}}{{$w := index $d.Wards .WardID}}<tr><td class="mono">{{.Ref}}</td><td>{{.Label}}</td><td>{{label .Kind}}</td><td>{{$w.Name}}</td></tr>{{end}}</tbody></table></div>
+</div>
+{{end}}

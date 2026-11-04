@@ -1,0 +1,65 @@
+{{define "layout"}}<!doctype html>
+<html lang="{{.Lang}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{if .Title}}{{.Title}} · {{end}}Bhagirath</title>
+<meta name="description" content="Bhagirath connects dirty-water complaints, water tests and illness signals, and follows up with officials until the fix is verified by residents.">
+<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/static/app.css">
+{{if or .User .Data.Map}}<link rel="stylesheet" href="/static/leaflet/leaflet.css">
+<script src="/static/leaflet/leaflet.js" defer></script>{{end}}
+<script src="/static/app.js" defer></script>
+</head>
+<body data-now="{{rfc3339 .Now}}">
+{{if .Demo}}<div class="demo-banner"><div class="wrap"><strong>DEMO deployment</strong><span>All wards, people and officials are fictional. Messages are simulated, never sent.</span>{{if .CanSim}}<a href="/app/demo">Open the guided demo →</a>{{else}}<a href="/login">Judges: log in to run the guided demo →</a>{{end}}</div></div>{{end}}
+<header class="topbar"><div class="wrap">
+  <a class="logo" href="{{if .User}}/app{{else}}/{{end}}" aria-label="Bhagirath home"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3C11 10 7 15 7 20a9 9 0 0 0 18 0c0-5-4-10-9-17z" fill="#0d6b8c"/><path d="M11 21a5 5 0 0 0 5 5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>Bhagirath <span class="hi">भगीरथ</span></a>
+  {{if .User}}<nav class="nav" aria-label="Dashboard">
+    <a href="/app" {{if eq .Page "overview"}}class="on"{{end}}>Overview</a>
+    <a href="/app/complaints" {{if or (eq .Page "complaints") (eq .Page "complaint")}}class="on"{{end}}>Complaints</a>
+    <a href="/app/escalations" {{if or (eq .Page "escalations") (eq .Page "escalation")}}class="on"{{end}}>Escalations</a>
+    <a href="/app/review" {{if eq .Page "review"}}class="on"{{end}}>Review</a>
+    <a href="/app/signals" {{if eq .Page "signals"}}class="on"{{end}}>Tests &amp; illness</a>
+    {{if .CanOp}}<a href="/app/volunteer" {{if eq .Page "volunteer"}}class="on"{{end}}>Volunteer line</a>{{end}}
+    <a href="/app/outbox" {{if eq .Page "outbox"}}class="on"{{end}}>Outbox</a>
+    <a href="/app/pilot" {{if eq .Page "pilot"}}class="on"{{end}}>Pilot</a>
+    {{if and .Demo .CanSim}}<a href="/app/demo" {{if eq .Page "demo"}}class="on"{{end}}>▶ Demo</a>{{end}}
+    <a href="/app/settings" {{if eq .Page "settings"}}class="on"{{end}}>Settings</a>
+  </nav>
+  <div class="who"><span>{{.User}} · {{.Role}}</span><form method="post" action="/logout" class="inline-form"><input type="hidden" name="csrf" value="{{.CSRF}}"><button class="btn small">Log out</button></form></div>
+  {{else}}<nav class="nav" aria-label="Public"><a href="/report" {{if eq .Page "report"}}class="on"{{end}}>Report a problem</a><a href="/impact" {{if eq .Page "impact"}}class="on"{{end}}>Public impact</a></nav>
+  <div class="who"><a class="btn small" href="/login">Partner login</a></div>{{end}}
+</div></header>
+<main><div class="wrap">
+{{if .Flash}}<div class="flash {{if or (contains .Flash "Not ") (contains .Flash "Could not")}}err{{end}}" role="status">{{.Flash}}</div>{{end}}
+{{template "content" .}}
+</div></main>
+<footer><div class="wrap spread">
+  <span>Bhagirath is an open-source citizen tool, not a government body. Alerts come from a frozen, published rule — not from an AI model.</span>
+  <span><a href="/impact">Impact</a> · <a href="https://github.com/vivekyarra/bhagirath">Source (Apache-2.0)</a> · {{.Version}}</span>
+</div></footer>
+</body>
+</html>{{end}}
+
+{{define "pack"}}{{$d := .Data}}
+<div class="card alert-card {{if $d.Alert}}lvl-b-{{$d.Alert.Level}}{{end}}">
+  <div class="spread"><div><small class="muted">Evidence pack {{$d.Esc.Ref}} · {{$d.Ward.Name}}, {{$d.Ward.CityOrBlock}}, {{$d.Ward.District}}</small>
+  <h2>{{if $d.Alert}}<span class="badge lvl-{{$d.Alert.Level}}">{{$d.Alert.Level.Title}}</span> water-safety alert{{else}}Resident complaint{{end}}</h2></div>
+  <div style="text-align:right"><small class="muted">Respond by {{ist $d.Deadline}}</small><br>{{if eq (printf "%s" $d.Esc.Outcome) "pending"}}<span class="countdown" data-deadline="{{rfc3339 $d.Deadline}}"></span>{{else}}<span class="badge out-{{$d.Esc.Outcome}}">{{label $d.Esc.Outcome}}</span>{{end}}</div></div>
+  {{if $d.Alert}}<p class="reason"><strong>Reason:</strong> {{$d.Alert.ReasonText}}</p>{{if $d.Alert.ReasonLocal}}<p class="reason" lang="hi"><strong>कारण:</strong> {{$d.Alert.ReasonLocal}}</p>{{end}}{{end}}
+  <p class="muted">To: {{$d.Official.Name}}, {{$d.Official.Role}} (ladder rung {{$d.Esc.Level}}) · sent {{ist $d.Esc.SentAt}} · reason: {{label $d.Esc.Reason}}{{if $d.Esc.GrievanceNumber}} · grievance no. <strong>{{$d.Esc.GrievanceNumber}}</strong>{{end}}</p>
+</div>
+{{if $d.Pins}}<div class="card"><h3>Where</h3><div class="map short" data-pins="{{json $d.Pins}}" data-ring="{{json (index $d.Ward.Polygon 0)}}"></div><p class="muted print-only">Map: see online version.</p></div>{{end}}
+<div class="card flush"><div class="head"><h3>Complaints ({{len $d.Complaints}}) — anonymised</h3></div><div class="scroll"><table class="data">
+<thead><tr><th>Ref</th><th>Reported</th><th>Problem (English)</th><th>Resident's words</th><th>Location</th><th>Status</th></tr></thead><tbody>
+{{range $d.Complaints}}<tr><td class="mono">{{if $.User}}<a href="/app/complaints/{{.Ref}}">{{.Ref}}</a>{{else}}{{.Ref}}{{end}}</td><td>{{ist .CreatedAt}}<br><small>{{label .Channel}}</small></td><td>{{.DescriptionEN}}</td><td lang="{{.Language}}">{{if .Transcript}}“{{.Transcript}}”{{else}}<small class="muted">voice note awaiting transcript</small>{{end}}</td><td>{{.LocationText}}<br><small>{{label .LocationMethod}}</small></td><td><span class="badge st-{{.Status}}">{{label .Status}}</span>{{if .ReopenCount}}<br><small>reopened ×{{.ReopenCount}}</small>{{end}}</td></tr>{{else}}<tr><td colspan="6" class="muted">No open complaints.</td></tr>{{end}}
+</tbody></table></div></div>
+{{if $d.Tests}}<div class="card flush"><div class="head"><h3>Water tests</h3></div><div class="scroll"><table class="data"><thead><tr><th>Sampled</th><th>Parameter</th><th class="num">Result</th><th class="num">Limit</th><th>Verdict</th><th>Source</th></tr></thead><tbody>
+{{range $d.Tests}}<tr><td>{{ist .SampledAt}}</td><td>{{.Parameter}}</td><td class="num">{{if .Value}}{{.Value}} {{.Unit}}{{end}}</td><td class="num">{{if .LimitValue}}{{.LimitValue}}{{end}}</td><td>{{if .IsContaminated}}<span class="badge lvl-critical">fail</span>{{else}}<span class="badge lvl-none">pass</span>{{end}}</td><td>{{label .Source}}{{if .EvidenceURL}} · <a href="{{.EvidenceURL}}" rel="noopener">report</a>{{end}}</td></tr>{{end}}
+</tbody></table></div></div>{{end}}
+{{if $d.Illness}}<div class="card flush"><div class="head"><h3>Illness counts, last 7 days (no patient data)</h3></div><div class="scroll"><table class="data"><thead><tr><th>Reported</th><th>From</th><th class="num">Diarrhoea</th><th class="num">Vomiting</th><th class="num">ORS sold</th></tr></thead><tbody>
+{{range $d.Illness}}<tr><td>{{ist .ReportedAt}}</td><td>{{label .ReporterType}}</td><td class="num">{{.CasesDiarrhoea}}</td><td class="num">{{.CasesVomiting}}</td><td class="num">{{if .ORSUnitsSold}}{{.ORSUnitsSold}}{{end}}</td></tr>{{end}}
+</tbody></table></div></div>{{end}}
+{{if $d.Closures}}<div class="card"><h3>Earlier fix claims</h3><ul>{{range $d.Closures}}<li>{{ist .ClaimedAt}} by {{.ClaimedBy}} ({{.EvidenceType}}) → resident: <strong>{{label .CallbackResult}}</strong></li>{{end}}</ul></div>{{end}}
+{{end}}

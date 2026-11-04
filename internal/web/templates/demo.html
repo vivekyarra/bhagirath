@@ -1,0 +1,32 @@
+{{define "content"}}{{$d := .Data}}
+<div class="stack">
+  <div class="spread"><div><h1>Guided demo</h1><p class="muted">Runs the real agents on fictional data — the same code paths as the WhatsApp and telephony webhooks. Demo clock: +{{hours $d.Offset}}.</p></div>
+    <form method="post" action="/app/demo/reset" data-confirm="Reset all demo data?"><input type="hidden" name="csrf" value="{{.CSRF}}"><button class="btn">Reset demo data</button></form></div>
+  <div class="card">
+    <h2>The story in seven clicks</h2>
+    {{range $d.Story}}<div class="step {{if index $d.Done .Action}}done{{end}}"><div><h3>{{.Title}}</h3><p class="muted" style="margin:0">{{.Detail}}</p></div>
+      <form method="post" action="/app/demo/{{.Action}}"><input type="hidden" name="csrf" value="{{$.CSRF}}"><button class="btn {{if not (index $d.Done .Action)}}primary{{end}}">{{if index $d.Done .Action}}Run again{{else}}Run{{end}}</button></form></div>{{end}}
+  </div>
+  <div class="grid g3">
+    <form class="card" method="post" action="/app/demo/whatsapp"><input type="hidden" name="csrf" value="{{.CSRF}}"><h3>Send a WhatsApp message</h3>
+      <div class="field"><label>From</label><select name="phone">{{range $d.Phones}}<option>{{.}}</option>{{end}}<option value="{{$d.Clinic}}">{{$d.Clinic}} (demo clinic)</option></select></div>
+      <div class="field"><label>Text</label><textarea name="text" placeholder="e.g. नाली का पानी नल में आ रहा है — or YES / 1 / 2 / D 3 V 1"></textarea></div>
+      <div class="row"><input type="text" name="lat" placeholder="lat (optional)" style="max-width:130px"><input type="text" name="lon" placeholder="lon" style="max-width:130px"></div>
+      <p style="margin-top:8px"><button class="btn">Send</button></p></form>
+    <form class="card" method="post" action="/app/demo/missed-call"><input type="hidden" name="csrf" value="{{.CSRF}}"><h3>Give a missed call</h3>
+      <div class="field"><label>From</label><select name="phone">{{range $d.Phones}}<option>{{.}}</option>{{end}}</select></div>
+      <div class="field"><label>Language</label><select name="lang"><option value="hi">हिन्दी</option><option value="mr">मराठी</option><option value="te">తెలుగు</option><option value="en">English</option></select></div>
+      <div class="field"><label>What they say in the recording</label><textarea name="text" placeholder="Leave empty to send a recording to the human transcription queue"></textarea></div>
+      <label class="check"><input type="checkbox" name="consent" checked> presses 1 to allow callbacks</label>
+      <p style="margin-top:8px"><button class="btn">Call</button></p></form>
+    <form class="card" method="post" action="/app/demo/advance"><input type="hidden" name="csrf" value="{{.CSRF}}"><h3>Move the clock</h3>
+      <p class="muted">Deadlines and callbacks run on this clock. Escalation timers and resident callbacks fire immediately after a jump.</p>
+      <div class="row"><select name="hours" style="max-width:140px"><option value="6">+6 hours</option><option value="24">+24 hours</option><option value="49" selected>+49 hours</option><option value="73">+73 hours</option><option value="168">+7 days</option></select><button class="btn">Advance</button></div></form>
+  </div>
+  <div class="card"><h3>Also try</h3><ul class="story">
+    <li><a href="/report" target="_blank">The public report form</a> in four languages (works on any phone browser).</li>
+    <li><a href="/app/outbox?kind=escalation">Outbox → open any official's link</a> to see the evidence pack and mark a fix as the official.</li>
+    <li><a href="/app/review">Review queue</a>: correct a machine transcript and watch the word-error rate update.</li>
+    <li><a href="/impact">Public impact page</a> — what anyone can see, with no personal data.</li></ul></div>
+</div>
+{{end}}

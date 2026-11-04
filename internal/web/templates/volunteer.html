@@ -1,0 +1,20 @@
+{{define "content"}}{{$d := .Data}}
+<div class="stack" style="max-width:760px">
+  <h1>Volunteer phone line</h1>
+  <p class="note">For residents who call a volunteer instead of the missed-call number (and the fallback when a telephony provider is blocked). Ask the consent question aloud: <em>“May Bhagirath call you back to check the problem was fixed? Your number stays private.”</em></p>
+  <form method="post" action="/app/volunteer" enctype="multipart/form-data" class="card"><input type="hidden" name="csrf" value="{{.CSRF}}">
+    <div class="grid g2">
+      <div class="field"><label>Caller's mobile</label><input type="tel" name="phone" placeholder="98765 43210"></div>
+      <div class="field"><label>Language spoken</label><select name="lang"><option value="hi">हिन्दी</option><option value="en">English</option><option value="mr">मराठी</option><option value="te">తెలుగు</option></select></div>
+      <div class="field"><label>Problem</label><select name="issue"><option value="">Detect from what they said</option>{{range $d.Issues}}<option value="{{.}}">{{issue .}}</option>{{end}}</select></div>
+      <div class="field"><label>Ward / village</label><select name="ward"><option value="">Not sure</option>{{range $d.Wards}}<option value="{{.ID}}">{{.Name}}</option>{{end}}</select></div>
+    </div>
+    <div class="field"><label>What they said (their words, any language)</label><textarea name="text"></textarea></div>
+    <div class="field"><label>Landmark near their home</label><input type="text" name="landmark"></div>
+    <div class="field"><label>Call recording (optional)</label><input type="file" name="audio" accept="audio/*"></div>
+    <div class="row"><label class="check"><input type="checkbox" name="consent"> Caller agreed to callbacks</label>
+      <select name="smartphone" style="max-width:220px"><option value="">Smartphone? unknown</option><option value="no">No smartphone</option><option value="yes">Has a smartphone</option></select></div>
+    <p style="margin-top:12px"><button class="btn primary">Log complaint</button></p>
+  </form>
+</div>
+{{end}}

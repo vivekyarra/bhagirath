@@ -1,0 +1,19 @@
+{{define "content"}}{{$d := .Data}}
+<div class="stack">
+  <div class="spread"><h1>Complaints</h1>{{if .CanOp}}<a class="btn" href="/app/volunteer">+ Log a call</a>{{end}}</div>
+  <form class="row card" method="get" action="/app/complaints">
+    <input type="text" name="q" value="{{$d.Q.Get "q"}}" placeholder="Search ref, words, landmark" style="max-width:260px">
+    <select name="ward" style="max-width:220px"><option value="">All wards</option>{{range $id, $w := $d.Wards}}<option value="{{$id}}" {{if eq ($d.Q.Get "ward") $id}}selected{{end}}>{{$w.Name}}</option>{{end}}</select>
+    <select name="status" style="max-width:180px"><option value="">Any status</option>{{range $d.Statuses}}<option value="{{.}}" {{if eq ($d.Q.Get "status") (printf "%s" .)}}selected{{end}}>{{label .}}</option>{{end}}</select>
+    <select name="channel" style="max-width:180px"><option value="">Any channel</option>{{range $d.Channels}}<option value="{{.}}" {{if eq ($d.Q.Get "channel") (printf "%s" .)}}selected{{end}}>{{label .}}</option>{{end}}</select>
+    <label class="check"><input type="checkbox" name="followup" value="1" {{if eq ($d.Q.Get "followup") "1"}}checked{{end}}> needs location</label>
+    <button class="btn">Filter</button>
+  </form>
+  <div class="card flush"><div class="scroll"><table class="data"><thead><tr><th>Ref</th><th>When</th><th>Problem</th><th>Ward · location</th><th>Channel</th><th>Status</th></tr></thead><tbody>
+  {{range $d.Complaints}}{{$w := index $d.Wards .WardID}}<tr><td><a class="mono" href="/app/complaints/{{.Ref}}">{{.Ref}}</a>{{if .DuplicateOf}}<br><small>duplicate</small>{{end}}</td><td>{{ist .CreatedAt}}</td>
+    <td>{{issue .IssueType}}<br><small class="muted">{{if .Transcript}}{{printf "%.90s" .Transcript}}{{else}}🎙 awaiting transcript{{end}}</small></td>
+    <td>{{if $w.Name}}{{$w.Name}}{{else}}<span class="badge lvl-warning">unlocated</span>{{end}}<br><small>{{label .LocationMethod}}</small></td><td>{{label .Channel}}</td><td><span class="badge st-{{.Status}}">{{label .Status}}</span></td></tr>
+  {{else}}<tr><td colspan="6" class="muted">No complaints match.</td></tr>{{end}}
+  </tbody></table></div></div>
+</div>
+{{end}}

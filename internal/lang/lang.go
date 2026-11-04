@@ -109,7 +109,7 @@ func Normalize(text string) string {
 		case unicode.IsLetter(r) || unicode.IsDigit(r) || unicode.Is(unicode.Mn, r) || unicode.Is(unicode.Mc, r):
 			b.WriteRune(r)
 			space = false
-		case r == '‍' || r == '‌': // ZWJ/ZWNJ inside Indic words
+		case r == '\u200d' || r == '\u200c': // ZWJ/ZWNJ inside Indic words
 		default:
 			if !space {
 				b.WriteByte(' ')

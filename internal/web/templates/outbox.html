@@ -1,0 +1,14 @@
+{{define "content"}}{{$d := .Data}}
+<div class="stack">
+  <div class="spread"><h1>Outbox</h1><div class="row">{{range $k := (list "" "escalation" "callback" "advisory" "consent" "followup" "partner")}}<a class="btn small" href="?kind={{$k}}">{{if $k}}{{label $k}}{{else}}all{{end}}</a>{{end}}</div></div>
+  {{if .Demo}}<p class="note">Demo mode: messages are recorded but never sent. You can answer verification calls as the resident and open officials' links to act as the official.</p>{{end}}
+  <div class="card flush"><div class="scroll"><table class="data"><thead><tr><th>When</th><th>Kind</th><th>To</th><th>Message</th><th>Status</th></tr></thead><tbody>
+  {{range $d.Messages}}<tr><td>{{ist .CreatedAt}}</td><td>{{label .Kind}}<br><small>{{.Channel}} · {{langName .Language}}</small></td><td>{{.RecipientLabel}}</td>
+    <td style="max-width:520px">{{if .Subject}}<strong>{{.Subject}}</strong><br>{{end}}<span lang="{{.Language}}">{{printf "%.260s" .Body}}</span>
+      {{if and $.Demo .Link}}{{if ne .Link "(delivered)"}}<br><a href="{{.Link}}" target="_blank" rel="noopener">Open as the official ↗</a>{{end}}{{end}}
+      {{if and $.Demo (eq .Kind "callback") $.CanSim}}{{if not (index $d.Decided .EntityID)}}<form method="post" action="/app/outbox/{{.ID}}/answer" class="row" style="margin-top:6px"><input type="hidden" name="csrf" value="{{$.CSRF}}"><span>Answer as the resident:</span><button class="btn small good" name="answer" value="1">1 · fixed</button><button class="btn small danger" name="answer" value="2">2 · not fixed</button></form>{{else}}<br><small class="muted">answered</small>{{end}}{{end}}</td>
+    <td><span class="badge msg-{{.Status}}">{{.Status}}</span>{{if .Error}}<br><small class="muted">{{printf "%.80s" .Error}}</small>{{end}}</td></tr>
+  {{else}}<tr><td colspan="5" class="muted">No messages.</td></tr>{{end}}
+  </tbody></table></div></div>
+</div>
+{{end}}
