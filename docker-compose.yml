@@ -1,0 +1,32 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: bhagirath
+      POSTGRES_PASSWORD: bhagirath
+      POSTGRES_DB: bhagirath
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bhagirath"]
+      interval: 3s
+      retries: 20
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgres://bhagirath:bhagirath@db:5432/bhagirath?sslmode=disable
+      BHAGIRATH_MODE: ${BHAGIRATH_MODE:-demo}
+      BHAGIRATH_BASE_URL: ${BHAGIRATH_BASE_URL:-http://localhost:8080}
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+volumes:
+  pgdata:
