@@ -1,0 +1,254 @@
+[
+  {
+    "Slug": "indore_bhagirathpura_2025",
+    "Name": "Bhagirathpura (Ward 11), Indore (Madhya Pradesh)",
+    "Variant": "All rows about the affected area",
+    "Scenario": "best",
+    "Rule": "v1",
+    "RuleSHA256": "9366e3fa9535b3ab58ef02f64dd1cb8a46ebb58d2d81a8e29ea80729271b5e93",
+    "FirstWatch": "2024-03-07T06:31:00Z",
+    "FirstWarning": "2025-12-24T06:30:00Z",
+    "FirstCritical": "2025-12-24T06:30:00Z",
+    "FirstC": "2024-03-07T06:31:00Z",
+    "FirstT": "2025-12-29T06:30:00Z",
+    "FirstI": "2025-12-24T06:30:00Z",
+    "CommissionerBy": "2024-03-13T06:31:00Z",
+    "HealthBy": "2025-12-24T06:30:00Z",
+    "Inputs": {
+      "Complaints": 24,
+      "Tests": 11,
+      "Illness": 37
+    }
+  },
+  {
+    "Slug": "indore_bhagirathpura_2025",
+    "Name": "Bhagirathpura (Ward 11), Indore (Madhya Pradesh)",
+    "Variant": "All rows about the affected area",
+    "Scenario": "conservative",
+    "Rule": "v1",
+    "RuleSHA256": "9366e3fa9535b3ab58ef02f64dd1cb8a46ebb58d2d81a8e29ea80729271b5e93",
+    "FirstWatch": "2024-03-07T06:31:00Z",
+    "FirstWarning": "2025-12-29T06:30:00Z",
+    "FirstCritical": "2025-12-30T06:30:00Z",
+    "FirstC": "2024-03-07T06:31:00Z",
+    "FirstT": "2025-12-29T06:30:00Z",
+    "FirstI": "2025-12-30T06:30:00Z",
+    "CommissionerBy": "2024-03-13T06:31:00Z",
+    "HealthBy": "2025-12-29T06:30:00Z",
+    "Inputs": {
+      "Complaints": 24,
+      "Tests": 11,
+      "Illness": 9
+    }
+  },
+  {
+    "Slug": "indore_bhagirathpura_2025",
+    "Name": "Bhagirathpura (Ward 11), Indore (Madhya Pradesh)",
+    "Variant": "Without the Feb 2024 councillor letter",
+    "Scenario": "best",
+    "Rule": "v1",
+    "RuleSHA256": "9366e3fa9535b3ab58ef02f64dd1cb8a46ebb58d2d81a8e29ea80729271b5e93",
+    "FirstWatch": "2025-05-11T06:31:00Z",
+    "FirstWarning": "2025-12-24T06:30:00Z",
+    "FirstCritical": "2025-12-24T06:30:00Z",
+    "FirstC": "2025-05-11T06:31:00Z",
+    "FirstT": "2025-12-29T06:30:00Z",
+    "FirstI": "2025-12-24T06:30:00Z",
+    "CommissionerBy": "2025-05-17T06:31:00Z",
+    "HealthBy": "2025-12-24T06:30:00Z",
+    "Inputs": {
+      "Complaints": 23,
+      "Tests": 11,
+      "Illness": 37
+    }
+  },
+  {
+    "Slug": "indore_bhagirathpura_2025",
+    "Name": "Bhagirathpura (Ward 11), Indore (Madhya Pradesh)",
+    "Variant": "Without the Feb 2024 councillor letter",
+    "Scenario": "conservative",
+    "Rule": "v1",
+    "RuleSHA256": "9366e3fa9535b3ab58ef02f64dd1cb8a46ebb58d2d81a8e29ea80729271b5e93",
+    "FirstWatch": "2025-11-27T06:31:00Z",
+    "FirstWarning": "2025-12-29T06:30:00Z",
+    "FirstCritical": "2025-12-30T06:30:00Z",
+    "FirstC": "2025-11-27T06:31:00Z",
+    "FirstT": "2025-12-29T06:30:00Z",
+    "FirstI": "2025-12-30T06:30:00Z",
+    "CommissionerBy": "2025-12-03T06:31:00Z",
+    "HealthBy": "2025-12-29T06:30:00Z",
+    "Inputs": {
+      "Complaints": 23,
+      "Tests": 11,
+      "Illness": 9
+    }
+  },
+  {
+    "Slug": "indore_bhagirathpura_2025",
+    "Name": "Bhagirathpura (Ward 11), Indore (Madhya Pradesh)",
+    "Variant": "Only the three individually dated 2025 helpline complaints",
+    "Scenario": "best",
+    "Rule": "v1",
+    "RuleSHA256": "9366e3fa9535b3ab58ef02f64dd1cb8a46ebb58d2d81a8e29ea80729271b5e93",
+    "FirstWatch": "2025-10-22T06:31:00Z",
+    "FirstWarning": "2025-12-24T06:30:00Z",
+    "FirstCritical": "2025-12-24T06:30:00Z",
+    "FirstC": "2025-10-22T06:31:00Z",
+    "FirstT": "2025-12-29T06:30:00Z",
+    "FirstI": "2025-12-24T06:30:00Z",
+    "CommissionerBy": "2025-10-28T06:31:00Z",
+    "HealthBy": "2025-12-24T06:30:00Z",
+    "Inputs": {
+      "Complaints": 3,
+      "Tests": 11,
+      "Illness": 37
+    }
+  },
+  {
+    "Slug": "indore_bhagirathpura_2025",
+    "Name": "Bhagirathpura (Ward 11), Indore (Madhya Pradesh)",
+    "Variant": "Only the three individually dated 2025 helpline complaints",
+    "Scenario": "conservative",
+    "Rule": "v1",
+    "RuleSHA256": "9366e3fa9535b3ab58ef02f64dd1cb8a46ebb58d2d81a8e29ea80729271b5e93",
+    "FirstWatch": "2025-11-27T06:31:00Z",
+    "FirstWarning": "2025-12-29T06:30:00Z",
+    "FirstCritical": "2025-12-30T06:30:00Z",
+    "FirstC": "2025-11-27T06:31:00Z",
+    "FirstT": "2025-12-29T06:30:00Z",
+    "FirstI": "2025-12-30T06:30:00Z",
+    "CommissionerBy": "2025-12-03T06:31:00Z",
+    "HealthBy": "2025-12-29T06:30:00Z",
+    "Inputs": {
+      "Complaints": 3,
+      "Tests": 11,
+      "Illness": 9
+    }
+  },
+  {
+    "Slug": "shimla_2015",
+    "Name": "Shimla Municipal Corporation area (Himachal Pradesh) – hepatitis E/jaundice",
+    "Variant": "All rows about the affected area",
+    "Scenario": "best",
+    "Rule": "v1",
+    "RuleSHA256": "9366e3fa9535b3ab58ef02f64dd1cb8a46ebb58d2d81a8e29ea80729271b5e93",
+    "FirstWatch": "2016-01-09T06:31:00Z",
+    "FirstWarning": "2016-01-18T06:30:00Z",
+    "FirstCritical": "",
+    "FirstC": "2016-01-09T06:31:00Z",
+    "FirstT": "2016-01-18T06:30:00Z",
+    "FirstI": "",
+    "CommissionerBy": "2016-01-15T06:31:00Z",
+    "HealthBy": "2016-01-18T06:30:00Z",
+    "Inputs": {
+      "Complaints": 2,
+      "Tests": 2,
+      "Illness": 0
+    }
+  },
+  {
+    "Slug": "shimla_2015",
+    "Name": "Shimla Municipal Corporation area (Himachal Pradesh) – hepatitis E/jaundice",
+    "Variant": "All rows about the affected area",
+    "Scenario": "conservative",
+    "Rule": "v1",
+    "RuleSHA256": "9366e3fa9535b3ab58ef02f64dd1cb8a46ebb58d2d81a8e29ea80729271b5e93",
+    "FirstWatch": "2016-01-09T06:31:00Z",
+    "FirstWarning": "2016-01-31T06:30:00Z",
+    "FirstCritical": "",
+    "FirstC": "2016-01-09T06:31:00Z",
+    "FirstT": "2016-01-31T06:30:00Z",
+    "FirstI": "",
+    "CommissionerBy": "2016-01-15T06:31:00Z",
+    "HealthBy": "2016-01-31T06:30:00Z",
+    "Inputs": {
+      "Complaints": 2,
+      "Tests": 2,
+      "Illness": 0
+    }
+  },
+  {
+    "Slug": "gandhinagar_2026",
+    "Name": "Sectors 24/26/28 and Adivada, Gandhinagar (Gujarat) – typhoid",
+    "Variant": "All rows about the affected area",
+    "Scenario": "best",
+    "Rule": "v1",
+    "RuleSHA256": "9366e3fa9535b3ab58ef02f64dd1cb8a46ebb58d2d81a8e29ea80729271b5e93",
+    "FirstWatch": "2026-01-03T06:30:00Z",
+    "FirstWarning": "",
+    "FirstCritical": "",
+    "FirstC": "2026-01-11T06:31:00Z",
+    "FirstT": "2026-01-03T06:30:00Z",
+    "FirstI": "",
+    "CommissionerBy": "2026-01-09T06:30:00Z",
+    "HealthBy": "",
+    "Inputs": {
+      "Complaints": 1,
+      "Tests": 2,
+      "Illness": 0
+    }
+  },
+  {
+    "Slug": "gandhinagar_2026",
+    "Name": "Sectors 24/26/28 and Adivada, Gandhinagar (Gujarat) – typhoid",
+    "Variant": "All rows about the affected area",
+    "Scenario": "conservative",
+    "Rule": "v1",
+    "RuleSHA256": "9366e3fa9535b3ab58ef02f64dd1cb8a46ebb58d2d81a8e29ea80729271b5e93",
+    "FirstWatch": "2026-01-03T06:30:00Z",
+    "FirstWarning": "",
+    "FirstCritical": "",
+    "FirstC": "2026-01-11T06:31:00Z",
+    "FirstT": "2026-01-03T06:30:00Z",
+    "FirstI": "",
+    "CommissionerBy": "2026-01-09T06:30:00Z",
+    "HealthBy": "",
+    "Inputs": {
+      "Complaints": 1,
+      "Tests": 2,
+      "Illness": 0
+    }
+  },
+  {
+    "Slug": "greater_noida_delta1_2026",
+    "Name": "Delta 1 sector, Greater Noida (Uttar Pradesh)",
+    "Variant": "All rows about the affected area",
+    "Scenario": "best",
+    "Rule": "v1",
+    "RuleSHA256": "9366e3fa9535b3ab58ef02f64dd1cb8a46ebb58d2d81a8e29ea80729271b5e93",
+    "FirstWatch": "2026-01-07T06:30:00Z",
+    "FirstWarning": "",
+    "FirstCritical": "",
+    "FirstC": "2026-01-14T06:31:00Z",
+    "FirstT": "",
+    "FirstI": "2026-01-07T06:30:00Z",
+    "CommissionerBy": "2026-01-13T06:30:00Z",
+    "HealthBy": "",
+    "Inputs": {
+      "Complaints": 2,
+      "Tests": 1,
+      "Illness": 1
+    }
+  },
+  {
+    "Slug": "greater_noida_delta1_2026",
+    "Name": "Delta 1 sector, Greater Noida (Uttar Pradesh)",
+    "Variant": "All rows about the affected area",
+    "Scenario": "conservative",
+    "Rule": "v1",
+    "RuleSHA256": "9366e3fa9535b3ab58ef02f64dd1cb8a46ebb58d2d81a8e29ea80729271b5e93",
+    "FirstWatch": "2026-01-07T06:30:00Z",
+    "FirstWarning": "",
+    "FirstCritical": "",
+    "FirstC": "2026-01-14T06:31:00Z",
+    "FirstT": "",
+    "FirstI": "2026-01-07T06:30:00Z",
+    "CommissionerBy": "2026-01-13T06:30:00Z",
+    "HealthBy": "",
+    "Inputs": {
+      "Complaints": 2,
+      "Tests": 1,
+      "Illness": 1
+    }
+  }
+]

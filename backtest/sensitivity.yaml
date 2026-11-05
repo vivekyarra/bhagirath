@@ -1,0 +1,12 @@
+# Extra, pre-declared variants run in addition to the default "all rows about
+# the affected area". Variants only REMOVE evidence (never add or move it), so
+# they can only make the rule fire later. They exist to show how much each
+# headline result depends on single, contestable sources.
+- slug: indore_bhagirathpura_2025
+  name: "Without the Feb 2024 councillor letter"
+  why: "The letter is 22 months before the outbreak and may concern an earlier, separate problem."
+  exclude: [IND-003]
+- slug: indore_bhagirathpura_2025
+  name: "Only the three individually dated 2025 helpline complaints"
+  why: "Drops every aggregate, retrospective or partisan complaint claim; keeps tests and illness rows."
+  only_complaints: [IND-006, IND-007, IND-008]
