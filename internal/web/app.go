@@ -769,6 +769,12 @@ func (s *Server) media(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "deleted under the data-retention policy", http.StatusGone)
 		return
 	}
+	// Residents' voices are personal data: only people who review or act on
+	// complaints (partner/admin; the judge account in demo) may play them.
+	if m.Kind == "audio" && !s.can(currentSession(r.Context()), "operate") {
+		http.Error(w, "your role cannot access recordings", http.StatusForbidden)
+		return
+	}
 	w.Header().Set("Content-Type", m.ContentType)
 	w.Header().Set("Cache-Control", "private, max-age=600")
 	w.Header().Set("Content-Disposition", "inline")

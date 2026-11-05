@@ -356,3 +356,22 @@ func TestSecurityHeaders(t *testing.T) {
 		t.Error("CSP allows eval")
 	}
 }
+
+func TestRecordingsNeedOperateRole(t *testing.T) {
+	e := setup(t, config.ModeDemo)
+	ctx := context.Background()
+	id, err := e.st.SaveMedia(ctx, domain.Media{SHA256: "a", ContentType: "audio/wav", Data: demo.SilentWAV(100), Kind: "audio"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	e.login("viewer", "viewer-password")
+	if code, _ := e.get("/app/media/" + itoa(id)); code != http.StatusForbidden {
+		t.Fatalf("viewer played a recording: %d", code)
+	}
+	e2 := setup(t, config.ModeDemo)
+	id2, _ := e2.st.SaveMedia(ctx, domain.Media{SHA256: "a", ContentType: "audio/wav", Data: demo.SilentWAV(100), Kind: "audio"})
+	e2.login("judge", "judge-password")
+	if code, _ := e2.get("/app/media/" + itoa(id2)); code != 200 {
+		t.Fatalf("demo judge could not play a recording: %d", code)
+	}
+}
