@@ -48,6 +48,24 @@ jobs:
       - name: govulncheck
         run: go run golang.org/x/vuln/cmd/govulncheck@v1.1.4 ./...
 
+  fuzz:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.26.x"
+          check-latest: true
+      - name: fuzz parsers of untrusted input (15 s each)
+        run: |
+          set -e
+          go test -run XXX -fuzz '^FuzzParse$' -fuzztime 15s ./internal/whatsapp/
+          go test -run XXX -fuzz '^FuzzParseIllness$' -fuzztime 15s ./internal/agents/
+          go test -run XXX -fuzz '^FuzzResolve$' -fuzztime 15s ./internal/locate/
+          go test -run XXX -fuzz '^FuzzReadCSV$' -fuzztime 15s ./internal/backtest/
+          go test -run XXX -fuzz '^FuzzParseRule$' -fuzztime 15s ./internal/rule/
+          go test -run XXX -fuzz '^FuzzRulesNeverPanics$' -fuzztime 15s ./internal/extract/
+
   docker:
     runs-on: ubuntu-latest
     steps:

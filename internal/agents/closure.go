@@ -95,6 +95,7 @@ func (e *Engine) ClaimFixed(ctx context.Context, cl Claim) (domain.Closure, erro
 // closures (scheduled every 5 minutes).
 func (e *Engine) ProcessCallbacks(ctx context.Context) (int, error) {
 	n := 0
+	wards := map[string]bool{}
 	err := e.Store.Tx(ctx, func(tx *store.Store) error {
 		due, err := tx.DueCallbacks(ctx, e.now(), 100)
 		if err != nil {
@@ -104,11 +105,22 @@ func (e *Engine) ProcessCallbacks(ctx context.Context) (int, error) {
 			if err := e.callback(ctx, tx, cl); err != nil {
 				return err
 			}
+			if c, err := tx.GetComplaint(ctx, cl.ComplaintID); err == nil && c.WardID != "" {
+				wards[c.WardID] = true
+			}
 			n++
 		}
 		return nil
 	})
-	return n, err
+	if err != nil {
+		return n, err
+	}
+	for w := range wards {
+		if _, err := e.EvaluateWard(ctx, w); err != nil {
+			return n, err
+		}
+	}
+	return n, nil
 }
 
 func (e *Engine) callback(ctx context.Context, tx *store.Store, cl domain.Closure) error {
@@ -175,7 +187,8 @@ func (e *Engine) callback(ctx context.Context, tx *store.Store, cl domain.Closur
 // RecordCallback stores the complainant's answer (keypress, WhatsApp button,
 // spoken yes/no, or a partner's field verification).
 func (e *Engine) RecordCallback(ctx context.Context, closureID int64, confirmed bool, channel, actor string) error {
-	return e.Store.Tx(ctx, func(tx *store.Store) error {
+	var wardID string
+	err := e.Store.Tx(ctx, func(tx *store.Store) error {
 		cl, err := tx.LockClosure(ctx, closureID)
 		if err != nil {
 			return err
@@ -191,8 +204,16 @@ func (e *Engine) RecordCallback(ctx context.Context, closureID int64, confirmed 
 		if confirmed {
 			result = domain.CallbackConfirmed
 		}
+		wardID = c.WardID
 		return e.decide(ctx, tx, cl, c, result, channel, actor)
 	})
+	if err != nil || wardID == "" {
+		return err
+	}
+	// A verified fix changes the rule's inputs: re-evaluate the ward now
+	// rather than leaving a stale alert until the next scheduled run.
+	_, err = e.EvaluateWard(ctx, wardID)
+	return err
 }
 
 func (e *Engine) decide(ctx context.Context, tx *store.Store, cl domain.Closure, c domain.Complaint, result domain.CallbackResult, channel, actor string) error {

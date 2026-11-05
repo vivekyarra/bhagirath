@@ -74,3 +74,34 @@ func TestAmbiguousLandmarkUsesHint(t *testing.T) {
 		t.Fatalf("hint not used: %+v", r)
 	}
 }
+
+func FuzzResolve(f *testing.F) {
+	f.Add("शिव मंदिर के पास", 22.72, 75.86)
+	f.Add("", 0.0, 0.0)
+	f.Fuzz(func(t *testing.T, text string, lat, lon float64) {
+		ws := wardsCached
+		if ws == nil {
+			return
+		}
+		p := &domain.Point{Lat: lat, Lon: lon}
+		r := Resolve(Input{Text: text, Point: p}, ws)
+		if r.WardID != "" && !known(r.WardID, ws) {
+			t.Fatalf("resolved to unknown ward %q", r.WardID)
+		}
+		if r.Method == domain.LocGPS && r.Point == nil {
+			t.Fatal("gps method without point")
+		}
+	})
+}
+
+var wardsCached []domain.Ward
+
+func init() {
+	l, err := config.LoadLadder("../../config/ladder.example.yaml")
+	if err != nil {
+		return
+	}
+	for _, w := range l.Wards {
+		wardsCached = append(wardsCached, w.ToWard())
+	}
+}

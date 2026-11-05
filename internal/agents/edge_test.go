@@ -245,3 +245,18 @@ func TestLocationPinAttachesInsteadOfCreatingComplaint(t *testing.T) {
 		t.Fatalf("pins created complaints: %d", n)
 	}
 }
+
+func FuzzParseIllness(f *testing.F) {
+	for _, s := range []string{"D 3 V 1 ORS 12", "दस्त 4 उल्टी 2", "ors=99999", "d -1", "D 99999999999"} {
+		f.Add(s)
+	}
+	f.Fuzz(func(t *testing.T, s string) {
+		c, ok := agents.ParseIllness(s)
+		if !ok {
+			return
+		}
+		if c.Diarrhoea < 0 || c.Vomiting < 0 || c.Diarrhoea > 99999 || c.Vomiting > 99999 || (c.ORS != nil && (*c.ORS < 0 || *c.ORS > 99999)) {
+			t.Fatalf("out-of-range counts from %q: %+v", s, c)
+		}
+	})
+}
