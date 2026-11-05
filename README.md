@@ -38,6 +38,14 @@ The data needed to prevent these deaths already existed, but in three places nob
 
 **AI is used where it helps and kept away from where it must not decide.** Transcription, extraction and translation may use a speech or language model, and its output is validated against fixed enums with a deterministic fallback. Alert levels come only from the published rule. That keeps the system auditable and the backtest honest.
 
+## Screens
+
+| | |
+|---|---|
+| ![Critical alert with the C/T/I signal breakdown, escalations and advisory approval](docs/screenshots/alert-critical.jpg) **Critical alert:** each signal, its reason in English and Hindi, and the ladder with live deadlines | ![Overview map and alerts](docs/screenshots/overview.jpg) **Overview:** the ward map, active alerts and open escalations |
+| ![A fake closure caught: the resident pressed 2](docs/screenshots/fake-closure-caught.jpg) **Fake closure caught:** an official claimed a fix, the resident pressed 2, and the complaint was reopened and escalated | ![The evidence pack an official receives](docs/screenshots/official-evidence-pack.jpg) **Official's link:** the evidence pack, acknowledgement, and a fix claim with photo or retest |
+| ![Guided demo for judges](docs/screenshots/guided-demo.jpg) **Guided demo:** the story in seven clicks | ![Hindi report form on a phone](docs/screenshots/mobile-report-hi.jpg) **Report form** in four languages, built for cheap phones |
+
 ## The alert rule (v1, frozen)
 
 Per ward, over rolling windows ([full YAML](config/alert_rule_v1.yaml)):

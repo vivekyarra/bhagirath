@@ -23,7 +23,7 @@ import (
 )
 
 func (s *Server) landing(w http.ResponseWriter, r *http.Request) {
-	m, _ := s.Engine.Store.ComputeMetrics(r.Context(), !s.Cfg.Demo(), s.Engine.Clock.Now())
+	m, _, _, _ := s.impactData(r)
 	s.render(w, r, "landing", map[string]any{"Title": "Bhagirath — clean water accountability", "M": m, "Rule": s.Engine.Rule, "FrozenTag": rule.FrozenTag})
 }
 

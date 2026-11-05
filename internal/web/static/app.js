@@ -48,14 +48,18 @@
   var colors = { watch: "#d18a00", warning: "#e0661b", critical: "#c62828", "": "#2f855a" };
   var pinColors = { open: "#0d6b8c", escalated: "#0d6b8c", claimed_fixed: "#d18a00", verified_fixed: "#2f855a", reopened: "#c62828", invalid: "#999" };
   function drawWards(map, wards, bounds, link) {
+    // Focus on wards with an active alert (most severe first); show all otherwise.
+    var rank = { critical: 3, warning: 2, watch: 1 }, top = 0;
+    wards.forEach(function (w) { top = Math.max(top, rank[w.Level] || 0); });
     wards.forEach(function (w) {
       var ring = (w.Polygon && w.Polygon[0] || []).map(function (p) { return [p.lat, p.lon]; });
       if (!ring.length) return;
+      var focus = top === 0 || (rank[w.Level] || 0) === top;
       var poly = L.polygon(ring, { color: colors[w.Level || ""], weight: 2, fillOpacity: w.Level ? 0.18 : 0.06 }).addTo(map);
       var label = "<b>" + esc(w.Name) + "</b><br>" + (w.Level ? w.Level.toUpperCase() + " alert" : "No active alert");
       if (link && w.AlertID) label += '<br><a href="/app/alerts/' + w.AlertID + '">Open alert →</a>';
       poly.bindPopup(label);
-      ring.forEach(function (p) { bounds.push(p); });
+      if (focus) ring.forEach(function (p) { bounds.push(p); });
     });
   }
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
@@ -75,7 +79,7 @@
           .bindPopup('<a href="/app/complaints/' + esc(c.Ref) + '"><b>' + esc(c.Ref) + "</b></a><br>" + esc(c.Issue) + "<br>" + esc(c.Status.replace(/_/g, " ")) + " · " + esc(c.Channel.replace(/_/g, " ")))
           .addTo(map);
       });
-      if (bounds.length) map.fitBounds(bounds, { padding: [20, 20] });
+      if (bounds.length) map.fitBounds(bounds, { padding: [20, 20], maxZoom: 16 });
     });
   }
   // Static maps with inline data (evidence pack, complaint page).
