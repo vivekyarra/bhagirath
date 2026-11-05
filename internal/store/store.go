@@ -338,3 +338,8 @@ func (s *Store) AcquireLease(ctx context.Context, name, holder string, ttl time.
 	}
 	return tag.RowsAffected() == 1, nil
 }
+
+// QueryRowForTest exposes raw queries to invariant checks in tests.
+func (s *Store) QueryRowForTest(ctx context.Context, sql string, args ...any) pgx.Row {
+	return s.q.QueryRow(ctx, sql, args...)
+}

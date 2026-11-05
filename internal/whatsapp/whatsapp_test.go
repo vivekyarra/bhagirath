@@ -101,3 +101,19 @@ func TestSendAndMedia(t *testing.T) {
 		t.Fatal("401 not reported")
 	}
 }
+
+func FuzzParse(f *testing.F) {
+	f.Add([]byte(sample))
+	f.Add([]byte(`{"entry":[{"changes":[{"value":{"messages":[{"type":"audio"}]}}]}]}`))
+	f.Fuzz(func(t *testing.T, b []byte) {
+		ins, _, err := Parse(b)
+		if err != nil {
+			return
+		}
+		for _, in := range ins {
+			if in.Type == "" {
+				t.Fatal("message without a type")
+			}
+		}
+	})
+}

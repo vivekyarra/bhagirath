@@ -141,3 +141,18 @@ func TestCommittedResultsAreReproducible(t *testing.T) {
 		t.Fatal("backtest/RESULTS.md is stale or hand-edited; run `go run ./cmd/bhagirath backtest` and commit the result")
 	}
 }
+
+func FuzzReadCSV(f *testing.F) {
+	f.Add(sample)
+	f.Fuzz(func(t *testing.T, s string) {
+		rows, err := ReadCSV(strings.NewReader(s))
+		if err != nil {
+			return
+		}
+		for _, r := range rows {
+			if r.Latest.IsZero() || r.Earliest.After(r.Latest) {
+				t.Fatalf("invalid row accepted: %+v", r)
+			}
+		}
+	})
+}
