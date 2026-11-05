@@ -1,6 +1,7 @@
 {{define "content"}}{{$d := .Data}}
 <div class="stack" style="max-width:980px;margin:0 auto">
   <p class="note">This page was sent to you by <strong>Bhagirath</strong>, a citizen water-safety tool run with {{if $d.Ward.PartnerName}}{{$d.Ward.PartnerName}}{{else}}a local partner{{end}}. It is not a government system. Residents' identities are protected; contact the partner for a site visit.</p>
+  <p class="no-print" style="text-align:right;margin:0"><button class="btn small" data-print>Print / save as PDF</button></p>
   {{template "pack" .}}
   {{$open := or (eq (printf "%s" $d.Esc.Outcome) "pending") (eq (printf "%s" $d.Esc.Outcome) "acknowledged")}}
   {{if not $open}}<div class="card"><p><strong>This escalation is {{label $d.Esc.Outcome}}.</strong> No action is needed on this link. Thank you.</p></div>{{else}}

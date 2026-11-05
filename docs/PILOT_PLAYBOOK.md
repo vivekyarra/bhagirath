@@ -43,4 +43,4 @@ The median of these is the "before" on the impact page.
 
 ## Printable flyer
 
-[`docs/flyer.html`](flyer.html) is a bilingual A5 flyer. Open it in a browser, replace the number, and print.
+Open `/flyer?ward=<ward-id>` on the deployment and print it, or save it as a PDF. It is a bilingual A5 flyer with the missed-call number (`BHAGIRATH_MISSED_CALL_NUMBER`) and a QR code that opens the report form with the ward already selected. A static version is in [`docs/flyer.html`](flyer.html).

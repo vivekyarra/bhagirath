@@ -96,6 +96,18 @@ func (s *Server) alertPage(w http.ResponseWriter, r *http.Request) {
 	escs, _ := s.Engine.Store.ListEscalations(ctx, store.EscalationFilter{AlertID: a.ID})
 	advs, _ := s.Engine.Store.ListAdvisories(ctx, a.ID)
 	wd, _ := s.Engine.Store.GetWard(ctx, a.WardID)
+	type pin struct {
+		Lat, Lon   float64
+		Ref, Issue string
+	}
+	var pins []pin
+	if cl, err := s.Engine.Store.ComplaintsByRefs(ctx, res.C.ClusterIDs); err == nil {
+		for _, c := range cl {
+			if c.Point != nil {
+				pins = append(pins, pin{c.Point.Lat, c.Point.Lon, c.Ref, extract.IssueLabel(c.IssueType)})
+			}
+		}
+	}
 	delivered := 0
 	for _, x := range advs {
 		if x.Delivered {
@@ -103,7 +115,7 @@ func (s *Server) alertPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	s.render(w, r, "alert", map[string]any{"Title": a.Level.Title() + " — " + wd.Name, "A": a, "Res": res, "Transitions": trans, "Escalations": escs,
-		"Advisories": advs, "Delivered": delivered, "Ward": wd, "Officials": s.officialNames(ctx), "SignoffRequired": s.Cfg.RequirePartnerSignoff,
+		"Advisories": advs, "Delivered": delivered, "Ward": wd, "Pins": pins, "Officials": s.officialNames(ctx), "SignoffRequired": s.Cfg.RequirePartnerSignoff,
 		"Reviewed": s.Cfg.AdvisoryReviewedBy})
 }
 

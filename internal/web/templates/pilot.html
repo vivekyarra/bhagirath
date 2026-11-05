@@ -1,6 +1,6 @@
 {{define "content"}}{{$d := .Data}}{{$m := $d.M}}
 <div class="stack">
-  <div class="spread"><h1>Pilot &amp; metrics</h1><a class="btn primary" href="/app/pilot/METRICS.md">Export METRICS.md</a></div>
+  <div class="spread"><h1>Pilot &amp; metrics</h1><div class="row"><a class="btn" href="/flyer">Printable flyer with QR</a><a class="btn primary" href="/app/pilot/METRICS.md">Export METRICS.md</a></div></div>
   <p class="note">Every number here is a live database query. Export METRICS.md on submission day and commit it to <code>pilot/</code>. {{if .Demo}}This demo deployment includes its fictional wards.{{else}}Demo wards are excluded.{{end}}</p>
   <div class="card flush"><div class="head"><h2>Winning-grade targets (spec §3.2)</h2></div><div class="scroll"><table class="data"><thead><tr><th>Metric</th><th>Actual</th><th>Target</th><th>Stretch</th><th>Status</th></tr></thead><tbody>
     {{range $d.Targets}}<tr><td>{{.Metric}}</td><td class="mono">{{.Actual}}</td><td>{{.Target}}</td><td>{{.Stretch}}</td><td>{{if .Met}}{{if yes .Met}}<span class="badge lvl-none">met</span>{{else}}<span class="badge lvl-warning">below</span>{{end}}{{else}}—{{end}}</td></tr>{{end}}</tbody></table></div></div>

@@ -11,6 +11,8 @@
       <div class="sig {{if $r.I.Fired}}on{{end}}"><b>I · Illness</b>{{$r.I.Cases}} cases in 72 h{{if $r.I.ORSSpikes}}; ORS spike ×{{(index $r.I.ORSSpikes 0).Ratio}}{{end}}</div>
     </div>
   </div>
+  {{if $d.Pins}}<div class="card"><h2>The complaint cluster</h2><p class="muted">{{len $d.Pins}} complaints from {{$r.C.ClusterHouseholds}} households, all within {{printf "%.0f" $r.C.ClusterSpanM}} m of each other.</p>
+    <div class="map short" data-pins="{{json $d.Pins}}" data-ring="{{json (index $d.Ward.Polygon 0)}}"></div></div>{{end}}
   <div class="grid g2">
     <div class="card flush"><div class="head"><h2>Escalations</h2></div><div class="scroll"><table class="data"><thead><tr><th>Ref</th><th>Official</th><th>Rung</th><th>Deadline</th><th>Outcome</th></tr></thead><tbody>
       {{range $d.Escalations}}{{$o := index $d.Officials .OfficialID}}<tr><td><a class="mono" href="/app/escalations/{{.Ref}}">{{.Ref}}</a><br><small>{{label .Reason}}</small></td><td>{{$o.Name}}<br><small>{{$o.Role}} · {{.Channel}}</small></td><td>{{.Level}}</td>

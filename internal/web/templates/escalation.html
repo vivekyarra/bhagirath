@@ -1,5 +1,6 @@
 {{define "content"}}{{$d := .Data}}
 <div class="stack">
+  <p class="no-print" style="text-align:right;margin:0"><button class="btn small" data-print>Print / save as PDF</button></p>
   {{template "pack" .}}
   <div class="grid g2">
     <div class="card"><h2>Delivery</h2>{{range $d.Messages}}<p><span class="badge msg-{{.Status}}">{{.Status}}</span> {{.Channel}} → {{.RecipientLabel}} · {{ist .CreatedAt}}{{if .Error}}<br><small class="muted">{{.Error}}</small>{{end}}</p>

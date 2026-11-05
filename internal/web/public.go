@@ -65,7 +65,8 @@ func (s *Server) reportForm(w http.ResponseWriter, r *http.Request) {
 		http.SetCookie(w, &http.Cookie{Name: "bh_lang", Value: q, Path: "/", MaxAge: 365 * 86400, SameSite: http.SameSiteLaxMode})
 	}
 	wards, _ := s.Engine.Store.ListWards(r.Context())
-	s.render(w, r, "report", map[string]any{"Title": ft(l)["heading"], "T": ft(l), "L": l, "Issues": formIssues, "Wards": wards, "CSRF": s.publicCSRF("report")})
+	s.render(w, r, "report", map[string]any{"Title": ft(l)["heading"], "T": ft(l), "L": l, "Issues": formIssues, "Wards": wards, "CSRF": s.publicCSRF("report"),
+		"Ward": r.URL.Query().Get("ward")})
 }
 
 func (s *Server) reportSubmit(w http.ResponseWriter, r *http.Request) {
@@ -168,6 +169,7 @@ type impactCache struct {
 	m     store.Metrics
 	ts    []metrics.Target
 	wards []wardStat
+	proof []store.ProofEntry
 }
 
 func (s *Server) impactData(r *http.Request) (store.Metrics, []metrics.Target, []wardStat, error) {
@@ -185,7 +187,11 @@ func (s *Server) impactData(r *http.Request) (store.Metrics, []metrics.Target, [
 	if err != nil {
 		return m, nil, nil, err
 	}
-	c.m, c.ts, c.wards, c.at = m, ts, wards, time.Now()
+	proof, err := s.Engine.Store.ProofLog(r.Context(), !s.Cfg.Demo(), 50)
+	if err != nil {
+		return m, nil, nil, err
+	}
+	c.m, c.ts, c.wards, c.proof, c.at = m, ts, wards, proof, time.Now()
 	return m, ts, wards, nil
 }
 
@@ -201,7 +207,10 @@ func (s *Server) impactPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "metrics unavailable", http.StatusInternalServerError)
 		return
 	}
-	s.render(w, r, "impact", map[string]any{"Title": "Public impact", "M": m, "Targets": ts, "Wards": stats, "Rule": s.Engine.Rule, "FrozenTag": rule.FrozenTag})
+	s.impact.mu.Lock()
+	proof := s.impact.proof
+	s.impact.mu.Unlock()
+	s.render(w, r, "impact", map[string]any{"Title": "Public impact", "M": m, "Targets": ts, "Wards": stats, "Proof": proof, "Rule": s.Engine.Rule, "FrozenTag": rule.FrozenTag})
 }
 
 func (s *Server) impactJSON(w http.ResponseWriter, r *http.Request) {

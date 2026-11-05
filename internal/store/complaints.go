@@ -219,3 +219,24 @@ func (s *Store) ComplaintsByIDs(ctx context.Context, ids []int64) ([]domain.Comp
 func (s *Store) GetComplaintByProviderMsg(ctx context.Context, channel domain.Channel, msgID string) (domain.Complaint, error) {
 	return scanComplaint(s.q.QueryRow(ctx, `SELECT `+complaintCols+complaintFrom+` WHERE c.channel=$1 AND c.provider_msg_id=$2`, channel, msgID))
 }
+
+// ComplaintsByRefs loads complaints by public reference.
+func (s *Store) ComplaintsByRefs(ctx context.Context, refs []string) ([]domain.Complaint, error) {
+	if len(refs) == 0 {
+		return nil, nil
+	}
+	rows, err := s.q.Query(ctx, `SELECT `+complaintCols+complaintFrom+` WHERE c.ref = ANY($1) ORDER BY c.created_at`, refs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []domain.Complaint
+	for rows.Next() {
+		c, err := scanComplaint(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, c)
+	}
+	return out, rows.Err()
+}

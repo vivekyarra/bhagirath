@@ -123,6 +123,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /report", s.reportForm)
 	mux.HandleFunc("POST /report", s.limit("report", 10, s.reportSubmit))
 	mux.HandleFunc("GET /impact", s.impactPage)
+	mux.HandleFunc("GET /flyer", s.flyer)
+	mux.HandleFunc("GET /qr.svg", s.qrSVG)
 	mux.HandleFunc("GET /api/v1/impact", s.impactJSON)
 	mux.HandleFunc("GET /o/{token}", s.officialPage)
 	mux.HandleFunc("POST /o/{token}/ack", s.limit("official", 30, s.officialAck))

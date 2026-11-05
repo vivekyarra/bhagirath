@@ -24,6 +24,9 @@
   tick();
   setInterval(tick, 1000);
 
+  // Print buttons (inline handlers are blocked by the CSP).
+  document.querySelectorAll("[data-print]").forEach(function (b) { b.addEventListener("click", function () { window.print(); }); });
+
   // Confirm destructive or outward-facing actions.
   document.addEventListener("submit", function (e) {
     var msg = e.target.getAttribute("data-confirm");
