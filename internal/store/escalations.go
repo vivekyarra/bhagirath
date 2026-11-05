@@ -123,8 +123,8 @@ func (s *Store) CreateEscalation(ctx context.Context, e *domain.Escalation) erro
 
 // UpdateEscalation writes mutable fields.
 func (s *Store) UpdateEscalation(ctx context.Context, e domain.Escalation) error {
-	_, err := s.q.Exec(ctx, `UPDATE escalation SET acknowledged_at=$2, ack_via=$3, grievance_number=$4, outcome=$5, closed_at=$6, channel=$7
-		WHERE id=$1`, e.ID, e.AcknowledgedAt, e.AckVia, e.GrievanceNumber, e.Outcome, e.ClosedAt, e.Channel)
+	_, err := s.q.Exec(ctx, `UPDATE escalation SET acknowledged_at=$2, ack_via=$3, grievance_number=$4, outcome=$5, closed_at=$6, channel=$7,
+		deadline_at=$8 WHERE id=$1`, e.ID, e.AcknowledgedAt, e.AckVia, e.GrievanceNumber, e.Outcome, e.ClosedAt, e.Channel, e.DeadlineAt)
 	return err
 }
 
@@ -175,10 +175,13 @@ func (s *Store) ListEscalations(ctx context.Context, f EscalationFilter) ([]doma
 		` ORDER BY (outcome='pending') DESC, deadline_at ASC, id DESC LIMIT `+itoa(clampLimit(f.Limit, 500, 50000)), w.args...))
 }
 
-// DueEscalations locks pending escalations past their deadline.
+// DueEscalations locks escalations whose timer has expired: pending ones
+// (no acknowledgement in time) and acknowledged complaint escalations whose
+// fix window has passed ("acknowledged but never fixed").
 func (s *Store) DueEscalations(ctx context.Context, now time.Time, limit int) ([]domain.Escalation, error) {
 	return collectEscalations(s.q.Query(ctx, `SELECT `+escalationCols+` FROM escalation
-		WHERE outcome='pending' AND deadline_at <= $1 ORDER BY deadline_at LIMIT $2 FOR UPDATE SKIP LOCKED`, now, limit))
+		WHERE (outcome='pending' OR (outcome='acknowledged' AND complaint_id IS NOT NULL)) AND deadline_at <= $1
+		ORDER BY deadline_at LIMIT $2 FOR UPDATE SKIP LOCKED`, now, limit))
 }
 
 // LockEscalation loads one escalation FOR UPDATE.

@@ -214,3 +214,8 @@ func (s *Store) ComplaintsByIDs(ctx context.Context, ids []int64) ([]domain.Comp
 	}
 	return out, rows.Err()
 }
+
+// GetComplaintByProviderMsg finds the complaint created from a provider message.
+func (s *Store) GetComplaintByProviderMsg(ctx context.Context, channel domain.Channel, msgID string) (domain.Complaint, error) {
+	return scanComplaint(s.q.QueryRow(ctx, `SELECT `+complaintCols+complaintFrom+` WHERE c.channel=$1 AND c.provider_msg_id=$2`, channel, msgID))
+}

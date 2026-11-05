@@ -321,3 +321,8 @@ func nullStr(s string) any {
 	}
 	return s
 }
+
+// Exec runs a raw statement (used for advisory locks inside transactions).
+func (s *Store) Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error) {
+	return s.q.Exec(ctx, sql, args...)
+}
