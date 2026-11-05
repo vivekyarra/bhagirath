@@ -292,11 +292,11 @@ func (e *Engine) clinicMessage(ctx context.Context, rep domain.Reporter, m Messa
 		})
 		return Outcome{Handled: "ignored", Detail: "unparsed illness message"}, err
 	}
-	if fresh, err := e.Store.MarkInboundSeen(ctx, "whatsapp", m.ProviderMsgID, e.now()); err != nil || !fresh {
-		return Outcome{Handled: "ignored", Detail: "duplicate delivery"}, err
+	ir, err := e.addIllness(ctx, domain.IllnessReport{ReporterType: rep.Kind, ReporterID: &rep.ID, WardID: rep.WardID, ReportedAt: e.now(),
+		CasesDiarrhoea: counts.Diarrhoea, CasesVomiting: counts.Vomiting, ORSUnitsSold: counts.ORS, Notes: "via WhatsApp"}, rep.Ref, "whatsapp", m.ProviderMsgID)
+	if errors.Is(err, ErrDuplicateDelivery) {
+		return Outcome{Handled: "ignored", Detail: "duplicate delivery"}, nil
 	}
-	ir, err := e.AddIllness(ctx, domain.IllnessReport{ReporterType: rep.Kind, ReporterID: &rep.ID, WardID: rep.WardID, ReportedAt: e.now(),
-		CasesDiarrhoea: counts.Diarrhoea, CasesVomiting: counts.Vomiting, ORSUnitsSold: counts.ORS, Notes: "via WhatsApp"}, rep.Ref)
 	if err != nil {
 		return Outcome{}, err
 	}

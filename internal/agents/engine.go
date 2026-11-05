@@ -14,6 +14,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"sync"
 	"time"
 
 	"github.com/vivekyarra/bhagirath/internal/asr"
@@ -39,6 +40,9 @@ type Engine struct {
 	ASR       asr.Transcriber
 	Cfg       *config.Config
 	Log       *slog.Logger
+
+	evalMu   sync.Mutex
+	evalRuns map[string]*wardRun
 }
 
 func (e *Engine) now() time.Time { return e.Clock.Now() }
@@ -97,3 +101,10 @@ type Interactive struct {
 func issueLabel(it domain.IssueType, l string) string { return i18n.Issue(string(it), l) }
 
 func ptr[T any](v T) *T { return &v }
+
+// Fork returns an engine sharing this one's dependencies but with its own
+// clock and transcriber (used to replay seeded history). Coalescing state is
+// not shared.
+func (e *Engine) Fork(c clock.Clock, tr asr.Transcriber) *Engine {
+	return &Engine{Store: e.Store, Clock: c, Rule: e.Rule, Ladder: e.Ladder, Vault: e.Vault, Extractor: e.Extractor, ASR: tr, Cfg: e.Cfg, Log: e.Log}
+}

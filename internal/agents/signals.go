@@ -45,6 +45,15 @@ func (e *Engine) AddWaterTest(ctx context.Context, t domain.WaterTest, actor str
 
 // AddIllness stores an aggregate illness report and re-evaluates the ward.
 func (e *Engine) AddIllness(ctx context.Context, r domain.IllnessReport, actor string) (domain.IllnessReport, error) {
+	return e.addIllness(ctx, r, actor, "", "")
+}
+
+// ErrDuplicateDelivery means a provider retried a message already stored.
+var ErrDuplicateDelivery = errors.New("message already processed")
+
+// addIllness optionally records a provider message id in the same
+// transaction, so a retry after a failure is processed rather than dropped.
+func (e *Engine) addIllness(ctx context.Context, r domain.IllnessReport, actor, provider, msgID string) (domain.IllnessReport, error) {
 	if !r.ReporterType.IllnessSource() || r.WardID == "" {
 		return r, errors.New("ward and a valid reporter type are required")
 	}
@@ -59,6 +68,15 @@ func (e *Engine) AddIllness(ctx context.Context, r domain.IllnessReport, actor s
 	}
 	r.CreatedAt = e.now()
 	err := e.Store.Tx(ctx, func(tx *store.Store) error {
+		if msgID != "" {
+			fresh, err := tx.MarkInboundSeen(ctx, provider, msgID, e.now())
+			if err != nil {
+				return err
+			}
+			if !fresh {
+				return ErrDuplicateDelivery
+			}
+		}
 		if err := tx.CreateIllness(ctx, &r); err != nil {
 			return err
 		}

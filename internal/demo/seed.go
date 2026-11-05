@@ -95,12 +95,10 @@ func Seed(ctx context.Context, live *agents.Engine, d *notify.Dispatcher) error 
 	now := live.Clock.Now()
 	clk := clock.NewFixed(now.Add(-10 * 24 * time.Hour).Truncate(time.Hour))
 	clipA, clipB := SilentWAV(2100), SilentWAV(3400)
-	e := *live
-	e.Clock = clk
-	e.ASR = scriptedASR{
+	e := live.Fork(clk, scriptedASR{
 		len(clipA): "पंचायत भवन के पास हैंडपंप का पानी पीला और गंदा आ रहा है बच्चों को दस्त",
 		len(clipB): "गटर का पानी नल में मिल रहा है आंगनवाडी के पास बहुत बदबू",
-	}
+	})
 	dd := *d
 	dd.Clock = clk
 	step := func(h float64) { clk.Advance(time.Duration(h * float64(time.Hour))) }
@@ -148,9 +146,9 @@ func Seed(ctx context.Context, live *agents.Engine, d *notify.Dispatcher) error 
 		},
 		func() error { step(26); return nil },
 		// Urban official claims a fix; the resident says NO (fake closure caught), then a real fix is verified.
-		func() error { return claimAndAnswer(ctx, &e, Phone(201), false) },
+		func() error { return claimAndAnswer(ctx, e, Phone(201), false) },
 		func() error { step(30); return nil },
-		func() error { return claimAndAnswer(ctx, &e, Phone(201), true) },
+		func() error { return claimAndAnswer(ctx, e, Phone(201), true) },
 		// A web-form complaint from the urban ward (leak; not a water-quality signal).
 		func() error {
 			return ok(e.Intake(ctx, agents.Inbound{Channel: domain.ChannelWeb, Text: "Pipeline leaking on the main road near the ration shop for 3 days",
