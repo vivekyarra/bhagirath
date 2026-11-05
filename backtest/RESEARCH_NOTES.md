@@ -250,7 +250,7 @@ Status codes are from curl unless marked otherwise. "used" means the URL is cite
 - ✓ https://www.deccanchronicle.com/nation/mp-indore-tragedy-lab-tests-of-water-samples-suggest-faecal-coliform-contamination-1928584 — used
 - ✓ https://www.deccanchronicle.com/nation/pcb-survey-confirms-faecal-contamination-in-indores-groundwater-1929670 — used
 - ✓ https://www.siasat.com/indore-water-contamination-hc-orders-safekeep-of-original-pipeline-tender-3329414/ (corroborates 51 tube wells / E. coli; status report of 15 Jan)
-- ✓ https://thewire.in/government/10-dead-2000-fall-sick-in-indore-after-leakage-in-municipal-pipeline-leads-to-drinking-water-contamination (body not rendered)
+- ✓ https://m.thewire.in/article/government/10-dead-2000-fall-sick-in-indore-after-leakage-in-municipal-pipeline-leads-to-drinking-water-contamination (mobile copy; desktop thewire.in unreachable as of 2026-11-05)
 - ✓ https://madhyamamonline.com/india/contaminated-water-behind-indore-health-crisis-lab-findings-status-report-in-hc-tomorrow-1482296 (MGM report submitted Thu 1 Jan; 272/72/201/32)
 - ✓ https://thelivenagpur.com/2026/01/02/ignored-warnings-delayed-repairs-how-negligence-led-to-deadly-water-contamination-in-indores-bhagirathpura/ — used
 - ✓ https://en.wikipedia.org/wiki/2025_Indore_drinking_water_contamination (background only; not cited)
@@ -293,7 +293,7 @@ Status codes are from curl unless marked otherwise. "used" means the URL is cite
 - ✓ https://aninews.in/news/national/general-news/gujarat-gmc-issues-clarification-on-typhoid-cases-says-reports-of-deaths-incorrect-misleading20260106052534/ — used
 - ✓ https://www.tribuneindia.com/news/gandhinagartyphoid/after-indore-crisis-contaminated-water-causes-typhoid-outbreak-in-gandhinagar (PTI copy of ThePrint item)
 - ✓ https://m.thewire.in/article/health/gujarat-typhoid-outbreak-sewage-contaminates-drinking-water-network-over-100-cases-reported
-- ✗ https://thewire.in/health/gujarat-typhoid-outbreak-sewage-contaminates-drinking-water-network-over-100-cases-reported (desktop page and WebFetch: no body)
+- ✗ https://m.thewire.in/article/health/gujarat-typhoid-outbreak-sewage-contaminates-drinking-water-network-over-100-cases-reported (mobile copy loads as of 2026-11-05; desktop thewire.in unreachable; not used)
 - ✗ https://www.opindia.com/news-updates/typhoid-outbreak-in-gandhinagar-due-to-contaminated-water/ (403) **FAILED**
 - ✗ https://www.dnaindia.com/india/report-after-indore-contaminated-water-tragedy-hits-gujarat-s-gandhinagar-over-100-hospitalised-with-typhoid-3195937 (403) **FAILED**
 - ✗ https://www.theweek.in/news/health/2026/01/06/after-indore-gandhinagar-faces-typhoid-outbreak-know-more-about-symptoms-prevention.html (403) **FAILED**
