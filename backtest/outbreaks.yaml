@@ -1,0 +1,55 @@
+# Outbreak index for the frozen-rule backtest. All dates as reported by the cited source; see <slug>.csv and NOTES.md.
+# Where sources conflict, the EARLIEST reported date is given in the spec field (conservative for lead-time claims),
+# and a corroborated/official alternative is given in an extra *_corroborated / *_official field.
+
+- slug: indore_bhagirathpura_2025
+  name: "Bhagirathpura (Ward 11), Indore (Madhya Pradesh)"
+  period: "Dec 2025 – Feb 2026"
+  first_hospitalisation: 2025-12-25   # single family account: wife admitted to Verma Hospital (cause not independently confirmed)
+  first_hospitalisation_source: https://www.groundreport.in/states-madhya-pradesh/what-is-indores-bhagirathpura-contaminated-water-tragedy/
+  first_hospitalisation_official: 2025-12-29   # ">35 patients admitted to private hospitals on Monday" (Aaj Tak); officials later dated outbreak start to 29 Dec (PTI, 12 Jan)
+  first_hospitalisation_official_source: https://www.aajtak.in/madhya-pradesh/story/indore-bhagirathpura-contaminated-water-illness-deaths-lclar-strc-2426693-2025-12-30
+  first_death: 2025-12-21   # CLAIMED: [name withheld], cremated 21 Dec per cremation-ground records (FPJ); not officially attributed
+  first_death_source: https://www.freepressjournal.in/indore/mp-news-bhagirathpura-turns-into-a-death-zone
+  first_death_corroborated: 2025-12-29   # [name withheld], [name withheld], infant [name withheld] – named by family in several outlets
+  first_death_corroborated_source: https://www.millenniumpost.in/nation/officials-ignored-dirty-water-complaints-say-victims-families-643665
+  deaths_reported: "36 claimed by residents/Congress; Health Dept informed of 35 deaths by 2026-02-12, of which 22 'possibly related' (judicial commission final report, reported 2026-10-01). Official tolls along the way: 3–7 (31 Dec 2025), 7 (HC status report 15 Jan 2026), 16 of 23 (state death audit, 28 Jan 2026)."
+  deaths_source: https://www.dtnext.in/news/national/indore-water-linked-deaths-preventable-pipeline-tender-delays-contributed-to-tragedy-judicial-panel
+  summary: "Sewage entered the Narmada drinking-water network in Bhagirathpura through leaks, including one in the main line under a police-outpost toilet, and set off a large vomiting-diarrhoea outbreak from about 24 Dec 2025. Cumulatively 434 people were admitted by 12 Jan 2026 and screening found more than 1,400–2,456 symptomatic. Post-outbreak tests repeatedly found coliform/E. coli (26/50 samples taken ~29 Dec; MPPCB 50/52 total coliform and 40/52 E. coli on 3 Jan)."
+  data_quality: "Good on illness/hospital/death time series (daily PTI reporting) and post-outbreak tests. Pre-outbreak complaints exist but are thin: only 3 individually dated helpline complaints (15 Oct [date conflict: one Hindi rework says 15 Dec], mid-Nov, 18 Dec 2025) via a secondary outlet reworking an Indian Express report (IE original not opened); the rest are aggregates (23 Zone-4 complaints in 2025; 11 CM-Helpline complaints from the ward, undated; >400 city-wide 311 complaints in Dec 2025) or retrospective resident recollections ('six months', 'November and early December'). No dated pre-outbreak water test for Bhagirathpura: the commission's '2025 municipal records: 73 samples, 54 failed, 39 faecal coliform' cannot be dated or localised. No daily complaint counts. NDTV source could not be opened (403). Judicial commission report and HC orders on mphc.gov.in could not be opened (connection reset/503); used press summaries."
+
+- slug: shimla_2015
+  name: "Shimla Municipal Corporation area (Himachal Pradesh) – hepatitis E/jaundice"
+  period: "Dec 2015 – May 2016"
+  first_hospitalisation: null   # no dated first admission found; Ripon hospital receiving 20–25 jaundice patients/day 'for past 15 days' as of 7 Jan 2016 (≈ from 23 Dec 2015; attendance, not necessarily admission)
+  first_hospitalisation_source: https://www.tribuneindia.com/news/archive/community/jaundice-cases-mount-to-500-in-shimla-180306/
+  first_death: null   # exact date not found; upper bound 2016-01-20 (one death reported by Health Minister)
+  first_death_source: https://thenewshimachal.com/2016/01/health-minister-reviews-steps-to-tackle-jaundice-in-shimla-town/
+  deaths_reported: "33 (final outbreak investigation, IJAR Feb 2018); contemporaneous: 5 (25 Jan 2016), 9–10 (24–25 Feb 2016; minister said 4 on 23 Feb)"
+  deaths_source: https://www.worldwidejournals.com/indian-journal-of-applied-research-(IJAR)/recent_issues_pdf/2018/February/February_2018_1517474358__84.pdf
+  summary: "Effluent from malfunctioning sewage treatment plants (Malyana, Dhalli) upstream contaminated the Ashwani Khud drinking-water intake, causing a hepatitis E-dominated jaundice outbreak. Index case onset was in the second week of Dec 2015; IDSP flagged daily jaundice cases in Dec 2015; Ashwani Khud supply was stopped on 2 Jan 2016; NIV found HEV RNA in all 8 water samples (sampled 28–31 Jan 2016)."
+  data_quality: "Weak for complaint/test lead-time: no dated resident complaints (only 'complaints of turbid water' and Deputy Mayor's 'several complaints' to IPH about STPs, both undated) and no pre-outbreak lab test (routine labs did not test for virus; coliform tests found start 18 Jan 2016). Illness signal is jaundice, not diarrhoea/vomiting, so the frozen rule's illness inputs map imperfectly. Useful mainly as an 'IDSP/illness-first' case. First death date unknown. Case/death counts differ widely between officials, Tribune and the later investigation."
+
+- slug: gandhinagar_2026
+  name: "Sectors 24/26/28 and Adivada, Gandhinagar (Gujarat) – typhoid"
+  period: "late Dec 2025 – Jan 2026"
+  first_hospitalisation: null   # no dated first admission; '>100' under treatment by Sat 2026-01-03; outbreak 'surfaced over the past five days' as of 2026-01-04
+  first_hospitalisation_source: https://english.bombaysamachar.com/gujarat/what-went-wrong-in-gujarats-smart-city-gandhinagar-100-children-pay-the-price-after-water-contamination/
+  first_death: null   # no outbreak-attributed death; two child deaths on 2026-01-05 declared unrelated by hospital (disputed by a parent); GMC: 'no deaths'
+  first_death_source: https://www.deccanherald.com/india/gujarat/gujarat-typhoid-outbreak-over-150-hospitalised-in-gandhinagar-3852339
+  deaths_reported: "0 attributed (2 disputed child deaths, officially unrelated) as of 2026-01-06"
+  deaths_source: https://aninews.in/news/national/general-news/gujarat-gmc-issues-clarification-on-typhoid-cases-says-reports-of-deaths-incorrect-misleading20260106052534/
+  summary: "Leaks (7–10 points) in a newly laid Smart City water network let sewage into supply in Sectors 24, 28 and Adivada, causing a suspected-typhoid outbreak mostly among children aged 1–16. Cases reached 113 suspected (4 Jan) and 133 registered (6 Jan 2026), with 152 total admissions to Civil Hospital by 5 Jan."
+  data_quality: "Weak pre-outbreak evidence: a single outlet (MedBound Times) says residents reported foul-smelling, discoloured water 'days before' illness, undated and uncounted. No dated pre-outbreak test; post-outbreak test statements conflict (hospital superintendent: samples 'tested positive'; Deputy CM: 367/367 satisfactory on 4 Jan). Typhoid (fever) rather than diarrhoea, so illness inputs map imperfectly. No first-hospitalisation date."
+
+- slug: greater_noida_delta1_2026
+  name: "Delta 1 sector, Greater Noida (Uttar Pradesh)"
+  period: "Jan 2026"
+  first_hospitalisation: null   # none reported
+  first_hospitalisation_source: null
+  first_death: null   # none reported
+  first_death_source: null
+  deaths_reported: "0 as of 2026-01-09"
+  deaths_source: https://www.tribuneindia.com/news/delhi/residents-fall-ill-due-to-contaminated-tap-water-in-gr-noida/
+  summary: "Six to seven families in Delta 1 (mainly C Block) reported vomiting, fever and loose motions on 6–7 Jan 2026 and alleged sewage was getting into broken supply lines. The authority's samples of 7 Jan were reported clean, and a health camp treated 7 people with vomiting and diarrhoea."
+  data_quality: "Small, short episode; included as a low-severity/negative-test control, not a confirmed outbreak. Earlier complaints are undated and uncounted. The only reported test was negative, and the follow-up sample results were not found. No hospitalisations or deaths."
