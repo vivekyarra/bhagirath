@@ -375,3 +375,17 @@ func TestRecordingsNeedOperateRole(t *testing.T) {
 		t.Fatalf("demo judge could not play a recording: %d", code)
 	}
 }
+
+func TestMislabelledMediaIsNotRenderedInline(t *testing.T) {
+	e := setup(t, config.ModeDemo)
+	id, _ := e.st.SaveMedia(context.Background(), domain.Media{SHA256: "h", ContentType: "text/html", Data: []byte("<script>alert(1)</script>"), Kind: "audio"})
+	e.login("judge", "judge-password")
+	resp, err := e.c.Get(e.srv.URL + "/app/media/" + itoa(id))
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if resp.Header.Get("Content-Type") != "application/octet-stream" || !strings.HasPrefix(resp.Header.Get("Content-Disposition"), "attachment") {
+		t.Fatalf("served as %q / %q", resp.Header.Get("Content-Type"), resp.Header.Get("Content-Disposition"))
+	}
+}

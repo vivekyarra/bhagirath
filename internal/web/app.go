@@ -775,9 +775,13 @@ func (s *Server) media(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "your role cannot access recordings", http.StatusForbidden)
 		return
 	}
-	w.Header().Set("Content-Type", m.ContentType)
+	ct, disp := m.ContentType, "inline"
+	if !safeInline(ct) {
+		ct, disp = "application/octet-stream", "attachment"
+	}
+	w.Header().Set("Content-Type", ct)
 	w.Header().Set("Cache-Control", "private, max-age=600")
-	w.Header().Set("Content-Disposition", "inline")
+	w.Header().Set("Content-Disposition", disp)
 	_, _ = w.Write(m.Data)
 }
 
@@ -818,4 +822,15 @@ func (s *Server) mapJSON(w http.ResponseWriter, r *http.Request) {
 func (s *Server) eventsJSON(w http.ResponseWriter, r *http.Request) {
 	evs, _ := s.Engine.Store.ListEvents(r.Context(), store.EventFilter{Limit: 50})
 	writeJSON(w, evs)
+}
+
+// safeInline reports whether a stored media type may be rendered in the
+// browser; anything else (e.g. a mislabelled text/html upload) is downloaded.
+func safeInline(ct string) bool {
+	base := strings.TrimSpace(strings.SplitN(ct, ";", 2)[0])
+	switch base {
+	case "image/jpeg", "image/png", "image/webp", "audio/wav", "audio/x-wav", "audio/wave", "audio/ogg", "audio/mpeg", "audio/mp4", "audio/aac", "audio/webm", "audio/amr":
+		return true
+	}
+	return false
 }
