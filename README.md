@@ -18,6 +18,15 @@ Bhagirath connects citizen complaints about dirty water, water-test results and 
 
 ---
 
+## At a glance, against the judging criteria
+
+| Criterion | Evidence |
+|---|---|
+| **Size of the problem** | 1,61,062 of 63,96,035 drinking-water samples tested contaminated in 2025-26 (Rajya Sabha Unstarred Q.1859). The CAG found 8.95 lakh residents of Bhopal and Indore received contaminated water (Report No. 3 of 2019). Bhagirath is configured per ward or village and works for any one of them. |
+| **Severity** | Bhagirathpura, Indore: at least 16 deaths after months of ignored complaints; 434 people admitted to hospital by 12 Jan 2026 ([Deccan Herald/PTI](https://www.deccanherald.com/india/madhya-pradesh/indore-water-contamination-12-new-cases-of-diarrhoea-detected-over-4800-people-screened-3859863)). |
+| **Quality of the solution** | Five agents covering intake, fusion, escalation, verified closure and advisory. It works without a smartphone. The alert rule is frozen and auditable, backtested honestly and CI-checked. Tests cover rule edges, the full loop, concurrency, security and reproducibility. |
+| **Proven impact** | Field numbers are exported from the database to [pilot/METRICS.md](pilot/METRICS.md) and are never typed by hand. The backtest shows a 23-day lead on Indore under the most conservative reading. |
+
 ## Why
 
 In late December 2025, sewage-contaminated drinking water caused a diarrhoea outbreak in Bhagirathpura, Indore. About 150 people fell ill in the first week ([Aaj Tak](https://www.aajtak.in/madhya-pradesh/story/indore-bhagirathpura-contaminated-water-illness-deaths-lclar-strc-2426693-2025-12-30)), and at least 16 died ([Times of India](https://timesofindia.indiatimes.com/city/delhi/indore-water-tragedy-fallout-delhi-jal-board-ordered-to-intensify-quality-checks-dedicated-teams-to-monitor-high-density-areas/articleshow/126387877.cms)). Residents had complained about dirty water for months, on the 311 Mayor Helpline and to the CM Helpline: 11 complaints came from Bhagirathpura alone. About 700 such complaints in Indore sat "under resolution", and of 100 dirty-water CM Helpline complaints from the city, 80 were pending at Assistant Engineer level ([Dainik Bhaskar](https://www.bhaskarenglish.in/local/mp/news/indore-water-contamination-complaints-failed-to-trigger-action-appeals-made-mayor-helpline-cm-before-deaths-136854510.html)). Nationally, 1,61,062 of 63,96,035 drinking-water samples tested contaminated in 2025-26 (Rajya Sabha Unstarred Q.1859, 9 Mar 2026; [New Indian Express](https://www.newindianexpress.com/india/2026/Mar/09/161-lakh-water-sample-found-contaminated-across-the-country-in-2025-26-minister-somanna-informs-rs)).
