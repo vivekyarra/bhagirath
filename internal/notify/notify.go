@@ -93,6 +93,10 @@ func (d *Dispatcher) deliver(ctx context.Context, tx *store.Store, m domain.Outb
 		switch {
 		case err == nil:
 			m.Status, m.SentAt, m.ProviderID, m.Error = domain.MsgSent, &now, id, ""
+			// The link carries a bearer token; once delivered, do not keep it at rest.
+			if m.Link != "" {
+				m.Link = "(delivered)"
+			}
 		case errors.Is(err, ErrNoProvider) || m.Attempts >= MaxAttempts:
 			m.Status, m.Error = domain.MsgFailed, err.Error()
 		default:

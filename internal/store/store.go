@@ -326,3 +326,15 @@ func nullStr(s string) any {
 func (s *Store) Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error) {
 	return s.q.Exec(ctx, sql, args...)
 }
+
+// AcquireLease takes or renews a named lease for holder; only one replica
+// runs the scheduled agents at a time. It returns true if holder owns it.
+func (s *Store) AcquireLease(ctx context.Context, name, holder string, ttl time.Duration, now time.Time) (bool, error) {
+	tag, err := s.q.Exec(ctx, `INSERT INTO kv(key, value, updated_at) VALUES ($1,$2,$3)
+		ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value, updated_at=EXCLUDED.updated_at
+		WHERE kv.value = EXCLUDED.value OR kv.updated_at < $4`, "lease:"+name, holder, now, now.Add(-ttl))
+	if err != nil {
+		return false, err
+	}
+	return tag.RowsAffected() == 1, nil
+}

@@ -1,0 +1,26 @@
+{{define "content"}}{{$d := .Data}}{{$m := $d.M}}
+<div class="stack">
+  <div class="spread"><h1>Pilot &amp; metrics</h1><a class="btn primary" href="/app/pilot/METRICS.md">Export METRICS.md</a></div>
+  <p class="note">Every number here is a live database query. Export METRICS.md on submission day and commit it to <code>pilot/</code>. {{if .Demo}}This demo deployment includes its fictional wards.{{else}}Demo wards are excluded.{{end}}</p>
+  <div class="card flush"><div class="head"><h2>Winning-grade targets (spec §3.2)</h2></div><div class="scroll"><table class="data"><thead><tr><th>Metric</th><th>Actual</th><th>Target</th><th>Stretch</th><th>Status</th></tr></thead><tbody>
+    {{range $d.Targets}}<tr><td>{{.Metric}}</td><td class="mono">{{.Actual}}</td><td>{{.Target}}</td><td>{{.Stretch}}</td><td>{{if .Met}}{{if yes .Met}}<span class="badge lvl-none">met</span>{{else}}<span class="badge lvl-warning">below</span>{{end}}{{else}}—{{end}}</td></tr>{{end}}</tbody></table></div></div>
+  {{if .CanOp}}<div class="grid g2">
+    <form class="card" method="post" action="/app/pilot/outreach"><input type="hidden" name="csrf" value="{{.CSRF}}"><h3>Log outreach (households informed)</h3>
+      <div class="grid g2"><div class="field"><label>Ward</label><select name="ward">{{range $d.WardList}}<option value="{{.ID}}">{{.Name}}</option>{{end}}</select></div>
+      <div class="field"><label>Date</label><input type="date" name="date" value="{{$d.Today}}"></div>
+      <div class="field"><label>Households</label><input type="number" min="0" name="households" required></div>
+      <div class="field"><label>Method</label><select name="method"><option value="door_to_door">Door to door</option><option value="flyer">Flyer</option><option value="whatsapp_group">WhatsApp group</option><option value="meeting">Meeting / gram sabha</option><option value="other">Other</option></select></div></div>
+      <div class="field"><label>Note</label><input type="text" name="note"></div><button class="btn">Log</button></form>
+    <form class="card" method="post" action="/app/pilot/baseline"><input type="hidden" name="csrf" value="{{.CSRF}}"><h3>Baseline: how long fixes took before Bhagirath</h3>
+      <div class="grid g2"><div class="field"><label>Ward</label><select name="ward">{{range $d.WardList}}<option value="{{.ID}}">{{.Name}}</option>{{end}}</select></div>
+      <div class="field"><label>Source</label><select name="source"><option value="resident_interview">Resident interview</option><option value="helpline_data">Helpline data</option><option value="partner">Partner</option></select></div>
+      <div class="field"><label>Days to fix (or days waited so far)</label><input type="number" step="0.5" min="0" name="days" required></div>
+      <div class="field"><label>Was it fixed?</label><select name="resolved"><option value="yes">Yes</option><option value="no">No, still waiting</option></select></div></div>
+      <div class="field"><label>Note</label><input type="text" name="note"></div><button class="btn">Save</button></form>
+  </div>{{end}}
+  <div class="grid g2">
+    <div class="card flush"><div class="head"><h3>Outreach log ({{$m.HouseholdsInformed}} households)</h3></div><table class="data"><tbody>{{range $d.Outreach}}{{$w := index $d.Wards .WardID}}<tr><td>{{date .Date}}</td><td>{{$w.Name}}</td><td>{{label .Method}}</td><td class="num">{{.Households}}</td></tr>{{end}}</tbody></table></div>
+    <div class="card flush"><div class="head"><h3>Baseline observations (median {{f1 $m.BaselineMedianDays}} days)</h3></div><table class="data"><tbody>{{range $d.Baselines}}{{$w := index $d.Wards .WardID}}<tr><td>{{$w.Name}}</td><td>{{label .Source}}</td><td class="num">{{.DaysToFix}} d</td><td>{{if .Resolved}}fixed{{else}}never fixed{{end}}</td></tr>{{end}}</tbody></table></div>
+  </div>
+</div>
+{{end}}

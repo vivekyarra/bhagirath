@@ -1,0 +1,29 @@
+{{define "content"}}{{$m := .Data.M}}
+<div class="stack">
+  <div class="spread"><div><h1>Public impact</h1><p class="muted">Anonymised aggregates computed live from the database. {{if .Demo}}<strong>This is the demo deployment: numbers are from fictional seed data.</strong>{{end}}</p></div>
+  <a class="btn small" href="/api/v1/impact">JSON</a></div>
+  <div class="grid g4">
+    <div class="card kpi"><div class="v">{{$m.Complaints}}</div><div class="l">complaints ({{$m.NonSmartphone}} without a smartphone)</div></div>
+    <div class="card kpi"><div class="v">{{$m.EscalationsSent}}</div><div class="l">escalations · {{pct $m.EscalationsAcked $m.EscalationsDecided}} acknowledged</div></div>
+    <div class="card kpi"><div class="v">{{$m.VerifiedClosures}}</div><div class="l">fixes confirmed by residents</div></div>
+    <div class="card kpi alarm"><div class="v">{{$m.ReopenedComplaints}}</div><div class="l">false "fixed" claims caught</div></div>
+  </div>
+  <div class="grid g2">
+    <div class="card"><h2>Time to a verified fix</h2>
+      <p style="font-size:1.4rem"><strong>{{f1 $m.MedianDaysToFix}}</strong> days median with Bhagirath vs <strong>{{f1 $m.BaselineMedianDays}}</strong> days before (baseline, n={{$m.BaselineSamples}}).</p>
+      <p class="muted">Baseline from resident interviews, helpline data and the partner, recorded before the pilot started. Cases never fixed are counted at the days observed, which understates the baseline.</p></div>
+    <div class="card"><h2>Signals connected</h2>
+      <p>{{$m.WaterTests}} water tests ({{$m.WaterTestsFailed}} failed) · {{$m.IllnessReports}} illness reports from {{$m.IllnessContributors}} clinics/chemists/ASHAs · {{$m.AdvisoriesSent}} precautionary messages to households.</p>
+      <p class="muted">Alerts by highest level reached: watch {{index $m.AlertsByPeak "watch"}}, warning {{index $m.AlertsByPeak "warning"}}, critical {{index $m.AlertsByPeak "critical"}}.</p></div>
+  </div>
+  <div class="card flush"><div class="head"><h2>By ward</h2><small>Ward-level response times only — no official is named here.</small></div>
+    <div class="scroll"><table class="data"><thead><tr><th>Ward / village</th><th>Alert now</th><th class="num">Complaints</th><th class="num">Verified fixes</th><th class="num">Median hours to acknowledge</th><th class="num">Median days to verified fix</th></tr></thead><tbody>
+    {{range .Data.Wards}}<tr><td>{{.Ward.Name}}</td><td><span class="badge lvl-{{.Level}}">{{.Level.Title}}</span></td><td class="num">{{.Complaints}}</td><td class="num">{{.Verified}}</td><td class="num">{{f1 .MedianAckHrs}}</td><td class="num">{{f1 .MedianFixDays}}</td></tr>{{end}}
+    </tbody></table></div></div>
+  <div class="card flush"><div class="head"><h2>Progress against the hackathon targets</h2></div>
+    <div class="scroll"><table class="data"><thead><tr><th>Metric</th><th>Actual</th><th>Target</th><th>Status</th></tr></thead><tbody>
+    {{range .Data.Targets}}<tr><td>{{.Metric}}</td><td class="mono">{{.Actual}}</td><td>{{.Target}}</td><td>{{if .Met}}{{if yes .Met}}<span class="badge lvl-none">met</span>{{else}}<span class="badge">below</span>{{end}}{{else}}—{{end}}</td></tr>{{end}}
+    </tbody></table></div></div>
+  <p class="muted">Alert rule {{.Data.Rule.Version}} · SHA-256 <code>{{.Data.Rule.SHA256}}</code> · frozen at git tag <code>{{.Data.FrozenTag}}</code>.</p>
+</div>
+{{end}}

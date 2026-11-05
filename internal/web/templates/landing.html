@@ -1,0 +1,26 @@
+{{define "content"}}{{$m := .Data.M}}
+<section class="hero">
+  <h1>Dirty water complaints that cannot be closed without proof.</h1>
+  <p class="lead">In Indore's Bhagirathpura, residents complained about dirty water for months before an outbreak killed at least 16 people. The complaints, the water tests and the illness signals existed — in three places nobody connected. Bhagirath connects them, and keeps following up with officials until residents confirm the fix.</p>
+  <div class="row"><a class="btn primary" href="/report">Report a water problem</a><a class="btn" href="/impact">See public impact</a>{{if .Demo}}<a class="btn" href="/login">Judge / partner login</a>{{end}}</div>
+</section>
+<section class="stack" style="margin-top:20px">
+  <div class="loop">
+    <div><b>1 · Report</b>Missed call, IVR voice note, WhatsApp or web — in Hindi, English, Marathi or Telugu. No smartphone needed.</div>
+    <div><b>2 · Fuse</b>Complaints + water tests + clinic illness counts → a frozen, auditable rule (Watch / Warning / Critical).</div>
+    <div><b>3 · Escalate</b>Evidence pack to the right official with a deadline; silence climbs the ladder automatically.</div>
+    <div><b>4 · Verify</b>"Fixed" needs a photo or passing retest <em>and</em> the resident's confirmation. A "no" reopens it.</div>
+    <div><b>5 · Protect</b>Precautionary advice to households in their language — clearly labelled, never posing as the government.</div>
+  </div>
+  <div class="grid g4">
+    <div class="card kpi"><div class="v">{{$m.Complaints}}</div><div class="l">complaints logged</div></div>
+    <div class="card kpi"><div class="v">{{$m.EscalationsSent}}</div><div class="l">escalations with evidence</div></div>
+    <div class="card kpi"><div class="v">{{$m.VerifiedClosures}}</div><div class="l">fixes verified by residents</div></div>
+    <div class="card kpi"><div class="v">{{$m.ReopenedComplaints}}</div><div class="l">false closures caught</div></div>
+  </div>
+  <div class="card">
+    <h2>Not a prediction model. An accountability loop.</h2>
+    <p>Alert decisions come from <a href="https://github.com/vivekyarra/bhagirath/blob/main/config/alert_rule_v1.yaml">a published rule</a> (version {{.Data.Rule.Version}}, SHA-256 <code>{{printf "%.12s" .Data.Rule.SHA256}}…</code>), frozen in git before it was backtested on real outbreaks. An AI model helps transcribe and summarise — it never decides who gets an alert.</p>
+  </div>
+</section>
+{{end}}

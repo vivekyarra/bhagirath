@@ -1,0 +1,22 @@
+{{define "content"}}{{$t := .Data.T}}{{$l := .Data.L}}
+<div style="max-width:640px;margin:0 auto" class="stack">
+  <div class="spread"><h1>{{$t.heading}}</h1><div class="langs"><a href="?lang=hi">हिन्दी</a><a href="?lang=en">English</a><a href="?lang=mr">मराठी</a><a href="?lang=te">తెలుగు</a></div></div>
+  <p class="note">{{$t.nophone}} {{$t.notgov}}</p>
+  {{if .Data.Error}}<div class="flash err" role="alert">{{.Data.Error}}</div>{{end}}
+  <form method="post" action="/report" class="card" enctype="multipart/form-data">
+    <input type="hidden" name="csrf" value="{{.Data.CSRF}}"><input type="hidden" name="lang" value="{{$l}}">
+    <div style="position:absolute;left:-5000px" aria-hidden="true"><input type="text" name="website" tabindex="-1" autocomplete="off"></div>
+    <fieldset style="border:0;padding:0;margin:0 0 12px"><legend><label>{{$t.what}}</label></legend>
+      <div class="chips">{{range .Data.Issues}}<label class="chip"><input type="radio" name="issue" value="{{.}}"><span>{{issueIn . $l}}</span></label>{{end}}</div>
+    </fieldset>
+    <div class="field"><label for="text">{{$t.describe}}</label><textarea id="text" name="text" maxlength="2000"></textarea></div>
+    <div class="field"><label for="landmark">{{$t.where}}</label><input id="landmark" type="text" name="landmark" maxlength="200"></div>
+    <div class="field"><label for="ward">{{$t.ward}}</label><select id="ward" name="ward"><option value="">{{$t.unknownward}}</option>{{range .Data.Wards}}<option value="{{.ID}}">{{.Name}}</option>{{end}}</select></div>
+    <input type="hidden" id="lat" name="lat"><input type="hidden" id="lon" name="lon">
+    <p><button type="button" class="btn" id="use-gps" hidden>📍 {{$t.gps}}</button></p>
+    <div class="field"><label for="phone">{{$t.phone}}</label><input id="phone" type="tel" name="phone" inputmode="tel" autocomplete="tel" maxlength="20"></div>
+    <label class="check"><input type="checkbox" name="consent" checked> <span>{{$t.consent}}</span></label>
+    <p style="margin-top:14px"><button class="btn primary block">{{$t.submit}}</button></p>
+  </form>
+</div>
+{{end}}

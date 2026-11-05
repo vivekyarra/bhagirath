@@ -1,0 +1,11 @@
+{{define "content"}}{{$t := .Data.T}}
+<div class="card" style="max-width:560px;margin:24px auto;text-align:center">
+  <h1>✓</h1>
+  <p>{{$t.done}}</p>
+  <p style="font-size:2rem;font-weight:700" class="mono">{{.Data.C.Ref}}</p>
+  <p class="muted">{{issueIn .Data.C.IssueType .Data.L}}</p>
+  {{if not .Data.Located}}<p class="note">{{.Data.Ask}}</p>{{end}}
+  <p class="note">{{$t.notgov}}</p>
+  <a class="btn" href="/report?lang={{.Data.L}}">←</a>
+</div>
+{{end}}

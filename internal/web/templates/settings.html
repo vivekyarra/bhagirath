@@ -1,0 +1,17 @@
+{{define "content"}}{{$d := .Data}}
+<div class="stack">
+  <h1>Settings</h1>
+  <div class="grid g2">
+    <div class="card"><h2>Alert rule</h2>
+      <p>Version <strong>{{$d.Rule.Version}}</strong> · SHA-256 <code style="word-break:break-all">{{$d.Rule.SHA256}}</code></p>
+      <p>{{if $d.FrozenOK}}<span class="badge lvl-none">matches the frozen v1 file</span>{{else}}<span class="badge lvl-critical">does NOT match frozen v1</span>{{end}} · git tag <code>{{$d.FrozenTag}}</code></p>
+      <p class="muted">Cluster: ≥{{$d.Rule.ComplaintCluster.MinComplaints}} complaints from ≥{{$d.Rule.ComplaintCluster.MinDistinctReporters}} households within {{$d.Rule.ComplaintCluster.PairwiseRadiusM}} m (pairwise) in {{$d.Rule.ComplaintCluster.WindowDays}} days, or any open &gt; {{$d.Rule.ComplaintCluster.StaleOpenDays}} days. Test: unresolved failure in {{$d.Rule.TestFailure.WindowDays}} days. Illness: ≥{{$d.Rule.IllnessCluster.MinCases}} cases in {{$d.Rule.IllnessCluster.WindowHours}} h or ORS ≥{{$d.Rule.IllnessCluster.ORS.Multiplier}}× the 4-week average.</p></div>
+    <div class="card"><h2>Channels &amp; providers</h2><table class="data"><tbody>{{range $k, $v := $d.Providers}}<tr><td>{{$k}}</td><td>{{if $v}}<span class="badge lvl-none">configured</span>{{else}}<span class="badge">not configured</span>{{end}}</td></tr>{{end}}</tbody></table>
+      <p class="muted" style="margin-top:8px">Mode: <strong>{{$d.Cfg.Mode}}</strong> · advisory text reviewed by: <strong>{{if $d.Cfg.AdvisoryReviewedBy}}{{$d.Cfg.AdvisoryReviewedBy}}{{else}}not yet recorded{{end}}</strong> · partner sign-off required: {{$d.Cfg.RequirePartnerSignoff}} · audio retention {{hours $d.Cfg.AudioRetention}}</p>
+      {{if $d.Jobs}}<p class="muted">Jobs last ran: {{range $k, $v := $d.Jobs}}{{$k}} {{ist $v}}; {{end}}</p>{{end}}</div>
+  </div>
+  <div class="card flush"><div class="head"><h2>Escalation ladder</h2><small>Deadlines: watch {{$d.Ladder.Deadline 1}} h · warning {{$d.Ladder.Deadline 2}} h · critical {{$d.Ladder.Deadline 3}} h · single complaint {{$d.Ladder.ComplaintDeadline}} h</small></div><div class="scroll"><table class="data"><thead><tr><th>Rung</th><th>Name</th><th>Role</th><th>Wards</th><th>Channel</th></tr></thead><tbody>
+    {{range $d.Officials}}<tr><td>{{.LadderLevel}}</td><td>{{.Name}}</td><td>{{.Role}}<br><small>{{.Department}}</small></td><td>{{range .WardIDs}}{{.}} {{end}}</td><td>{{.PreferredChannel}}{{if .GrievanceChannel}} ({{.GrievanceChannel}}){{end}}</td></tr>{{end}}</tbody></table></div></div>
+  <div class="card flush"><div class="head"><h2>Wards</h2></div><table class="data"><tbody>{{range $d.WardList}}<tr><td class="mono">{{.ID}}</td><td>{{.Name}}{{if .Demo}} <span class="badge">demo</span>{{end}}</td><td>{{.District}}, {{.State}}</td><td>{{langName .DefaultLanguage}}</td><td>{{len .Landmarks}} landmarks</td></tr>{{end}}</tbody></table></div>
+</div>
+{{end}}

@@ -1,0 +1,32 @@
+{{define "content"}}{{$d := .Data}}
+<div class="stack" style="max-width:980px;margin:0 auto">
+  <p class="note">This page was sent to you by <strong>Bhagirath</strong>, a citizen water-safety tool run with {{if $d.Ward.PartnerName}}{{$d.Ward.PartnerName}}{{else}}a local partner{{end}}. It is not a government system. Residents' identities are protected; contact the partner for a site visit.</p>
+  {{template "pack" .}}
+  {{$open := or (eq (printf "%s" $d.Esc.Outcome) "pending") (eq (printf "%s" $d.Esc.Outcome) "acknowledged")}}
+  {{if not $open}}<div class="card"><p><strong>This escalation is {{label $d.Esc.Outcome}}.</strong> No action is needed on this link. Thank you.</p></div>{{else}}
+  <div class="grid g2 no-print">
+    <div class="card"><h3>1 · Acknowledge</h3>
+      {{if $d.Esc.AcknowledgedAt}}<p>Acknowledged {{ist $d.Esc.AcknowledgedAt}}.</p>{{else}}
+      <form method="post" action="/o/{{$d.Token}}/ack"><input type="hidden" name="csrf" value="{{$d.CSRF}}">
+        <div class="field"><label for="g">Grievance / docket number (optional)</label><input id="g" type="text" name="grievance" maxlength="60"></div>
+        <button class="btn primary">I acknowledge this and will act</button></form>{{end}}
+      <p class="muted" style="margin-top:8px">Without acknowledgement by the deadline, Bhagirath escalates to the next officer automatically.</p></div>
+    <div class="card"><h3>2 · Mark a complaint fixed</h3>
+      {{$claimable := 0}}{{range $d.Complaints}}{{if or (eq (printf "%s" .Status) "open") (eq (printf "%s" .Status) "escalated") (eq (printf "%s" .Status) "reopened")}}{{$claimable = add $claimable 1}}{{end}}{{end}}
+      {{if eq $claimable 0}}<p class="muted">No complaint here is waiting for a fix claim (fixes already claimed are being verified with residents).</p>{{else}}
+      <form method="post" action="/o/{{$d.Token}}/fixed" enctype="multipart/form-data"><input type="hidden" name="csrf" value="{{$d.CSRF}}">
+        <div class="field"><label for="cid">Complaint</label><select id="cid" name="complaint_id" required>{{range $d.Complaints}}{{if or (eq (printf "%s" .Status) "open") (eq (printf "%s" .Status) "escalated") (eq (printf "%s" .Status) "reopened")}}<option value="{{.ID}}">{{.Ref}} — {{.DescriptionEN}}</option>{{end}}{{end}}</select></div>
+        <div class="field"><label for="photo">Photo of the repair</label><input id="photo" type="file" name="photo" accept="image/jpeg,image/png,image/webp" capture="environment"></div>
+        <details><summary>…or a passing retest</summary>
+          <div class="grid g2" style="margin-top:8px"><div class="field"><label>Parameter</label><input type="text" name="retest_parameter" placeholder="Total coliform"></div>
+          <div class="field"><label>Unit</label><input type="text" name="retest_unit" placeholder="MPN/100 ml"></div>
+          <div class="field"><label>Result</label><input type="number" step="any" name="retest_value"></div>
+          <div class="field"><label>Permissible limit</label><input type="number" step="any" name="retest_limit"></div></div>
+          <input type="hidden" name="retest_source" value="lab_report"></details>
+        <div class="field"><label for="note">What was done</label><input id="note" type="text" name="note" maxlength="300"></div>
+        <button class="btn good">Submit fix with evidence</button>
+        <p class="muted" style="margin-top:8px">A fix counts only after the resident confirms it by phone. If they say it is not fixed, the complaint reopens and goes to your senior.</p>
+      </form>{{end}}</div>
+  </div>{{end}}
+</div>
+{{end}}

@@ -1,0 +1,14 @@
+{{define "content"}}{{$d := .Data}}
+<div class="stack">
+  <div class="spread"><h1>Escalations</h1><div class="row"><a class="btn small" href="?show=open">Open</a><a class="btn small" href="?show=timed_out">Timed out</a><a class="btn small" href="?show=all">All</a></div></div>
+  <div class="card flush"><div class="scroll"><table class="data"><thead><tr><th>Ref</th><th>About</th><th>Official</th><th>Rung</th><th>Sent</th><th>Deadline</th><th>Outcome</th></tr></thead><tbody>
+  {{range $d.Escalations}}{{$o := index $d.Officials .OfficialID}}{{$w := index $d.Wards .WardID}}<tr>
+    <td><a class="mono" href="/app/escalations/{{.Ref}}">{{.Ref}}</a></td>
+    <td>{{if .AlertID}}<a href="/app/alerts/{{deref .AlertID}}">alert</a>{{else}}complaint{{end}} · {{$w.Name}}<br><small>{{label .Reason}}</small></td>
+    <td>{{$o.Name}}<br><small>{{$o.Role}} · via {{.Channel}}{{if .GrievanceNumber}} · #{{.GrievanceNumber}}{{end}}</small></td><td>{{.Level}}</td><td>{{ist .SentAt}}</td>
+    <td>{{if or (eq (printf "%s" .Outcome) "pending") (eq (printf "%s" .Outcome) "acknowledged")}}<span class="countdown" data-deadline="{{rfc3339 .DeadlineAt}}"></span>{{else}}{{ist .DeadlineAt}}{{end}}</td>
+    <td><span class="badge out-{{.Outcome}}">{{label .Outcome}}</span>{{if .AcknowledgedAt}}<br><small>ack {{ist .AcknowledgedAt}}</small>{{end}}</td></tr>
+  {{else}}<tr><td colspan="7" class="muted">None.</td></tr>{{end}}
+  </tbody></table></div></div>
+</div>
+{{end}}

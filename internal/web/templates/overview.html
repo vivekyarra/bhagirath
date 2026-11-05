@@ -1,0 +1,39 @@
+{{define "content"}}{{$d := .Data}}{{$m := $d.M}}
+<div class="stack">
+  <div class="spread"><h1>Overview</h1><span class="muted">{{ist .Now}} IST</span></div>
+  <div class="grid g4">
+    <a class="card kpi {{if $d.Alerts}}alarm{{end}}" href="#alerts" style="text-decoration:none;color:inherit"><div class="v">{{len $d.Alerts}}</div><div class="l">active alerts</div></a>
+    <a class="card kpi {{if $d.Overdue}}alarm{{end}}" href="/app/escalations" style="text-decoration:none;color:inherit"><div class="v">{{$d.Overdue}}</div><div class="l">escalations past deadline</div></a>
+    <a class="card kpi" href="/app/review" style="text-decoration:none;color:inherit"><div class="v">{{$d.Review}}</div><div class="l">transcripts to review · {{$d.Unlocated}} unlocated</div></a>
+    <div class="card kpi"><div class="v">{{len $d.Closures}}</div><div class="l">fixes awaiting resident confirmation</div></div>
+  </div>
+  <div class="grid split">
+    <div class="card"><div class="spread"><h2>Map</h2><div class="legend"><span><i class="dot" style="background:#0d6b8c"></i>open</span><span><i class="dot" style="background:#d18a00"></i>claimed fixed</span><span><i class="dot" style="background:#2f855a"></i>verified</span><span><i class="dot" style="background:#c62828"></i>reopened</span></div></div>
+      <div id="map" role="img" aria-label="Map of wards, alert levels and complaints"></div></div>
+    <div class="stack" id="alerts">
+      {{range $d.Alerts}}{{$w := index $d.Wards .WardID}}
+      <a class="card alert-card lvl-b-{{.Level}}" href="/app/alerts/{{.ID}}" style="display:block;text-decoration:none;color:inherit">
+        <div class="spread"><span class="badge lvl-{{.Level}}">{{.Level.Title}}</span><small class="muted">since {{ist .TriggeredAt}}</small></div>
+        <h3 style="margin-top:6px">{{$w.Name}}</h3><p class="reason" style="margin:0">{{.ReasonText}}</p></a>
+      {{else}}<div class="card"><h3>No active alerts</h3><p class="muted">The frozen rule found no ward with a complaint cluster, an unresolved failed test or an illness cluster.</p></div>{{end}}
+      <div class="card flush"><div class="head"><h3>Open escalations</h3><a href="/app/escalations">all →</a></div>
+        <table class="data"><tbody>{{range $d.Pending}}{{$o := index $d.Officials .OfficialID}}<tr><td><a href="/app/escalations/{{.Ref}}" class="mono">{{.Ref}}</a><br><small>{{$o.Role}}</small></td>
+        <td>{{if eq (printf "%s" .Outcome) "pending"}}<span class="countdown" data-deadline="{{rfc3339 .DeadlineAt}}"></span>{{else}}<span class="badge out-{{.Outcome}}">acknowledged</span><br><small>fix due</small> <span class="countdown" data-deadline="{{rfc3339 .DeadlineAt}}"></span>{{end}}</td></tr>{{else}}<tr><td class="muted">Nothing open.</td></tr>{{end}}</tbody></table></div>
+    </div>
+  </div>
+  <div class="grid g2">
+    <div class="card"><h2>Loop so far</h2>
+      <table class="data"><tbody>
+      <tr><td>Complaints (unique)</td><td class="num">{{$m.Complaints}}</td></tr>
+      <tr><td>… from non-smartphone channels</td><td class="num">{{$m.NonSmartphone}}</td></tr>
+      <tr><td>Eligible complaints escalated</td><td class="num">{{pct $m.EscalatedComplaints $m.EligibleComplaints}}</td></tr>
+      <tr><td>Escalations acknowledged</td><td class="num">{{pct $m.EscalationsAcked $m.EscalationsDecided}}</td></tr>
+      <tr><td>Timed out → auto-escalated</td><td class="num">{{$m.EscalationsTimedOut}}</td></tr>
+      <tr><td>Verified fixes</td><td class="num">{{$m.VerifiedClosures}}</td></tr>
+      <tr><td><strong>False "fixed" claims caught</strong></td><td class="num"><strong>{{$m.ReopenedComplaints}}</strong></td></tr>
+      <tr><td>Median days to verified fix (baseline)</td><td class="num">{{f1 $m.MedianDaysToFix}} ({{f1 $m.BaselineMedianDays}})</td></tr>
+      </tbody></table></div>
+    <div class="card"><h2>Activity</h2><ul class="timeline">{{range $d.Events}}<li><time>{{ist .At}}</time><span><strong>{{label .Action}}</strong> {{.EntityID}} <small class="muted">· {{.Actor}}</small></span></li>{{end}}</ul></div>
+  </div>
+</div>
+{{end}}
