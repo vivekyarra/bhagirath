@@ -260,3 +260,66 @@ func FuzzParseIllness(f *testing.F) {
 		}
 	})
 }
+
+func TestOfficialAcknowledgesOnWhatsApp(t *testing.T) {
+	h := newHarness(t)
+	const offPhone = "+910000000501"
+	enc, _ := h.e.Vault.Encrypt(offPhone)
+	wa := domain.Official{Name: "WA AE", Role: "Assistant Engineer", WardIDs: []string{ward}, PhoneEnc: enc, PhoneHash: h.e.Vault.HashPhone(offPhone),
+		LadderLevel: domain.Ladder1, PreferredChannel: "whatsapp", Active: true}
+	if err := h.st.CreateOfficial(h.ctx, &wa); err != nil {
+		t.Fatal(err)
+	}
+	out := h.whatsapp("+910000000031", "शिव मंदिर के पास गंदा पानी", nil)
+	var mine, other domain.Escalation
+	for _, x := range h.escalations(store.EscalationFilter{ComplaintID: out.Complaint.ID}) {
+		if x.OfficialID == wa.ID {
+			mine = x
+		} else {
+			other = x
+		}
+	}
+	if mine.ID == 0 || other.ID == 0 || mine.Channel != "whatsapp" {
+		t.Fatalf("expected escalations to both rung-1 officials: mine=%+v other=%+v", mine, other)
+	}
+	msgs, _ := h.st.ListMessages(h.ctx, store.MessageFilter{Entity: "escalation", EntityID: mine.ID})
+	if len(msgs) != 1 || !strings.Contains(msgs[0].Body, "ACK "+mine.Ref) || !strings.Contains(string(msgs[0].Interactive), `"ack"`) {
+		t.Fatalf("WhatsApp escalation lacks ACK instructions/button: %+v", msgs)
+	}
+	// Cannot acknowledge someone else's escalation.
+	res, err := h.e.HandleMessage(h.ctx, agents.Message{Phone: offPhone, Text: "ACK " + other.Ref})
+	if err != nil || res.Handled == "official_ack" {
+		t.Fatalf("acknowledged another official's escalation: %+v %v", res, err)
+	}
+	if x, _ := h.st.GetEscalation(h.ctx, other.ID); x.AcknowledgedAt != nil {
+		t.Fatal("other escalation acknowledged")
+	}
+	// Free text with the reference works, in any case.
+	res, err = h.e.HandleMessage(h.ctx, agents.Message{Phone: offPhone, Text: "ok received " + strings.ToLower(mine.Ref)})
+	if err != nil || res.Handled != "official_ack" {
+		t.Fatalf("text ack: %+v %v", res, err)
+	}
+	if x, _ := h.st.GetEscalation(h.ctx, mine.ID); x.AcknowledgedAt == nil || x.AckVia != "whatsapp" {
+		t.Fatalf("not acknowledged: %+v", x)
+	}
+	// Officials are never mistaken for residents filing complaints.
+	n0, _ := h.st.CountComplaints(h.ctx, store.ComplaintFilter{})
+	if _, err := h.e.HandleMessage(h.ctx, agents.Message{Phone: offPhone, Text: "गंदा पानी"}); err != nil {
+		t.Fatal(err)
+	}
+	if n1, _ := h.st.CountComplaints(h.ctx, store.ComplaintFilter{}); n1 != n0 {
+		t.Fatal("an official's message became a complaint")
+	}
+	// Button reply path.
+	out2 := h.whatsapp("+910000000032", "राशन की दुकान के पास बदबूदार पानी", nil)
+	for _, x := range h.escalations(store.EscalationFilter{ComplaintID: out2.Complaint.ID}) {
+		if x.OfficialID == wa.ID {
+			if r, err := h.e.HandleMessage(h.ctx, agents.Message{Phone: offPhone, ReplyID: "ack:" + itoa(x.ID)}); err != nil || r.Handled != "official_ack" {
+				t.Fatalf("button ack: %+v %v", r, err)
+			}
+		}
+	}
+	if _, err := h.d.Run(h.ctx); err != nil {
+		t.Fatal(err)
+	}
+}

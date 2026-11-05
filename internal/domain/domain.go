@@ -432,6 +432,7 @@ type Official struct {
 	Department       string      `json:"department"`
 	WardIDs          []string    `json:"ward_ids"`
 	PhoneEnc         []byte      `json:"-"`
+	PhoneHash        string      `json:"-"`
 	Email            string      `json:"email,omitempty"`
 	LadderLevel      LadderLevel `json:"ladder_level"`
 	GrievanceChannel string      `json:"grievance_channel,omitempty"` // e.g. "CM Helpline 181" when no direct contact

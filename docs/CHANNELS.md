@@ -15,6 +15,8 @@ What arrives: text, voice notes (downloaded, then transcribed or queued for revi
 
 Every webhook body is checked against `X-Hub-Signature-256`; unsigned requests get a 401. Delivery receipts mark advisories as delivered.
 
+**Officials on WhatsApp.** If the ladder file gives an official a `phone` and `preferred_channel: whatsapp`, their evidence packs arrive on WhatsApp with an **Acknowledge** button. They can tap it, or reply `ACK ESC-000123`, and the escalation is acknowledged without opening a link. Their number is matched by keyed hash, and an official can acknowledge only escalations addressed to them. Messages from officials are never treated as resident complaints.
+
 ## Twilio (missed call → free IVR callback)
 
 1. Buy a number that can receive calls. For Indian numbers, complete Twilio's regulatory bundle; if that is blocked, use Exotel below.

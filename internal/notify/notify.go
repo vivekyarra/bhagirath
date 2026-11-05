@@ -151,8 +151,9 @@ func (d *Dispatcher) send(ctx context.Context, tx *store.Store, m domain.Outboun
 	ctx, cancel := context.WithTimeout(ctx, 45*time.Second)
 	defer cancel()
 	var inter struct {
-		Kind      string `json:"kind"`
-		ClosureID int64  `json:"closure_id"`
+		Kind         string `json:"kind"`
+		ClosureID    int64  `json:"closure_id"`
+		EscalationID int64  `json:"escalation_id"`
 	}
 	if len(m.Interactive) > 0 {
 		_ = json.Unmarshal(m.Interactive, &inter)
@@ -188,6 +189,9 @@ func (d *Dispatcher) send(ctx context.Context, tx *store.Store, m domain.Outboun
 				return d.WhatsApp.SendTemplate(ctx, phone, d.Cfg.WhatsApp.CallbackTemplate, m.Language, nil)
 			}
 			return id, err
+		}
+		if inter.Kind == "ack" {
+			return d.WhatsApp.SendButtons(ctx, phone, truncateBody(body), []whatsapp.Button{{ID: fmt.Sprintf("ack:%d", inter.EscalationID), Title: "Acknowledge"}})
 		}
 		id, err := d.WhatsApp.SendText(ctx, phone, body)
 		if err != nil && m.Kind == "advisory" && d.Cfg.WhatsApp.AdvisoryTemplate != "" {
@@ -287,4 +291,13 @@ func (s *SMTPMailer) Send(ctx context.Context, to, subject, body string) error {
 		return c.Quit()
 	}
 	return smtp.SendMail(addr, auth, s.From, []string{to}, []byte(msg))
+}
+
+// truncateBody keeps interactive bodies within WhatsApp's 1,024-character limit.
+func truncateBody(s string) string {
+	r := []rune(s)
+	if len(r) <= 1000 {
+		return s
+	}
+	return string(r[:999]) + "…"
 }

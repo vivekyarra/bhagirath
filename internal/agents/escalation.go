@@ -2,6 +2,7 @@ package agents
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -114,6 +115,10 @@ func (e *Engine) createEscalation(ctx context.Context, tx *store.Store, o domain
 	m := domain.OutboundMessage{Kind: "escalation", Channel: channel, RecipientType: "official", RecipientID: o.ID, RecipientLabel: o.Name + " (" + o.Role + ")",
 		Language: "en", Subject: subject, Body: body, Link: link, Entity: "escalation", EntityID: esc.ID, Status: domain.MsgQueued,
 		CreatedAt: e.now(), NextAttemptAt: e.now()}
+	if channel == "whatsapp" {
+		m.Body += "\n\nReply \"ACK " + esc.Ref + "\" (or tap Acknowledge) to confirm you have received this."
+		m.Interactive, _ = json.Marshal(Interactive{Kind: "ack", EscalationID: esc.ID})
+	}
 	if channel == "grievance" {
 		// No direct contact: the partner files it on the official grievance
 		// channel and records the grievance number, which Bhagirath tracks.
