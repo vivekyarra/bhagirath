@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" font-family="system-ui,-apple-system,Segoe UI,Roboto,sans-serif" font-size="13">
+  <title>Bhagirath architecture</title>
+  <style>
+    .box{fill:#ffffff;stroke:#c9d2cc;stroke-width:1.2}
+    .agent{fill:#e3f1f6;stroke:#0d6b8c;stroke-width:1.4}
+    .store{fill:#f3f5f1;stroke:#9aa59e;stroke-width:1.2}
+    .out{fill:#fff3d6;stroke:#a86a00;stroke-width:1.2}
+    .h{font-weight:700;fill:#16201b}
+    .t{fill:#3c4842}
+    .s{fill:#58645d;font-size:11.5px}
+    .a{stroke:#58645d;stroke-width:1.4;fill:none;marker-end:url(#m)}
+    .loop{stroke:#b3261e;stroke-width:1.6;fill:none;stroke-dasharray:5 4;marker-end:url(#mr)}
+  </style>
+  <defs>
+    <marker id="m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#58645d"/></marker>
+    <marker id="mr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#b3261e"/></marker>
+  </defs>
+  <rect x="0" y="0" width="960" height="560" fill="#f6f7f4"/>
+  <text x="24" y="34" class="h" font-size="18">Bhagirath — an accountability loop, not a prediction model</text>
+
+  <!-- Intake channels -->
+  <text x="24" y="70" class="s">RESIDENTS (no smartphone needed)</text>
+  <rect class="box" x="24" y="80" width="170" height="44" rx="10"/><text x="38" y="100" class="h">Missed call → IVR</text><text x="38" y="116" class="s">free callback, records voice</text>
+  <rect class="box" x="24" y="134" width="170" height="44" rx="10"/><text x="38" y="154" class="h">WhatsApp</text><text x="38" y="170" class="s">voice note, text, location pin</text>
+  <rect class="box" x="24" y="188" width="170" height="44" rx="10"/><text x="38" y="208" class="h">Web form · volunteer line</text><text x="38" y="224" class="s">hi · en · mr · te</text>
+  <text x="24" y="272" class="s">SIGNAL CONTRIBUTORS</text>
+  <rect class="box" x="24" y="282" width="170" height="44" rx="10"/><text x="38" y="302" class="h">Lab / JJM / field kits</text><text x="38" y="318" class="s">manual entry, CSV import</text>
+  <rect class="box" x="24" y="336" width="170" height="44" rx="10"/><text x="38" y="356" class="h">Clinics · chemists · ASHAs</text><text x="38" y="372" class="s">WhatsApp “D 3 V 1 ORS 12”</text>
+
+  <!-- Intake agent -->
+  <rect class="agent" x="240" y="104" width="190" height="104" rx="12"/>
+  <text x="254" y="128" class="h">Intake Agent</text>
+  <text x="254" y="148" class="t">speech-to-text · extraction</text>
+  <text x="254" y="166" class="t">ward from pin / landmark</text>
+  <text x="254" y="184" class="t">dedupe · consent · follow-up</text>
+  <text x="254" y="200" class="s">LLM optional, never decides</text>
+  <path class="a" d="M194 102 C215 102 220 130 238 140"/>
+  <path class="a" d="M194 156 L238 156"/>
+  <path class="a" d="M194 210 C215 210 220 180 238 172"/>
+
+  <!-- Store -->
+  <rect class="store" x="240" y="282" width="190" height="98" rx="12"/>
+  <text x="254" y="306" class="h">PostgreSQL</text>
+  <text x="254" y="326" class="t">complaints · tests · illness</text>
+  <text x="254" y="344" class="t">alerts · escalations · closures</text>
+  <text x="254" y="362" class="s">phones AES-GCM + HMAC only</text>
+  <path class="a" d="M335 208 L335 280"/>
+  <path class="a" d="M194 304 L238 314"/>
+  <path class="a" d="M194 358 L238 348"/>
+
+  <!-- Fusion -->
+  <rect class="agent" x="480" y="282" width="200" height="98" rx="12"/>
+  <text x="494" y="306" class="h">Fusion &amp; Alert</text>
+  <text x="494" y="326" class="t">frozen rule v1 (YAML, SHA-pinned)</text>
+  <text x="494" y="344" class="t">C complaints · T tests · I illness</text>
+  <text x="494" y="362" class="s">Watch / Warning / Critical + reason</text>
+  <path class="a" d="M430 331 L478 331"/>
+
+  <!-- Escalation -->
+  <rect class="agent" x="480" y="104" width="200" height="104" rx="12"/>
+  <text x="494" y="128" class="h">Escalation Agent</text>
+  <text x="494" y="148" class="t">ladder: AE → EE → Commissioner</text>
+  <text x="494" y="166" class="t">+ health officer + partner</text>
+  <text x="494" y="184" class="t">evidence pack · deadline timers</text>
+  <text x="494" y="200" class="s">silence auto-escalates</text>
+  <path class="a" d="M580 282 L580 210"/>
+
+  <!-- Closure -->
+  <rect class="agent" x="730" y="104" width="206" height="104" rx="12"/>
+  <text x="744" y="128" class="h">Closure Verifier</text>
+  <text x="744" y="148" class="t">“fixed” needs photo or retest</text>
+  <text x="744" y="166" class="t">AND resident confirms by call</text>
+  <text x="744" y="184" class="t">3 attempts in 48 h</text>
+  <text x="744" y="200" class="s">“No” → reopen, one level up</text>
+  <path class="a" d="M680 156 L728 156"/>
+  <path class="loop" d="M833 104 C833 60 580 60 580 102"/>
+  <text x="626" y="72" class="s" fill="#b3261e">fake closure caught → reopened &amp; escalated</text>
+
+  <!-- Advisory -->
+  <rect class="agent" x="730" y="282" width="206" height="98" rx="12"/>
+  <text x="744" y="306" class="h">Advisory Agent</text>
+  <text x="744" y="326" class="t">Warning+: boil, ORS, danger signs</text>
+  <text x="744" y="344" class="t">in each household's language</text>
+  <text x="744" y="362" class="s">partner sign-off · “not a govt order”</text>
+  <path class="a" d="M680 331 L728 331"/>
+
+  <!-- Outputs -->
+  <rect class="out" x="240" y="430" width="190" height="76" rx="12"/>
+  <text x="254" y="454" class="h">Outbox</text><text x="254" y="474" class="t">email · WhatsApp · voice</text><text x="254" y="492" class="s">retries, delivery receipts</text>
+  <rect class="out" x="480" y="430" width="200" height="76" rx="12"/>
+  <text x="494" y="454" class="h">Partner dashboard</text><text x="494" y="474" class="t">map · alerts · timers · review</text><text x="494" y="492" class="s">METRICS.md export</text>
+  <rect class="out" x="730" y="430" width="206" height="76" rx="12"/>
+  <text x="744" y="454" class="h">Public impact page</text><text x="744" y="474" class="t">aggregates only</text><text x="744" y="492" class="s">no personal data, no shaming</text>
+  <path class="a" d="M580 210 C520 250 430 380 340 428"/>
+  <path class="a" d="M833 380 L833 428"/>
+  <path class="a" d="M580 380 L580 428"/>
+  <text x="24" y="540" class="s">Scheduled: alert engine every 15 min · timers and callbacks every 5 min · outbox continuously · retention daily (audio deleted after 90 days). One Go binary.</text>
+</svg>
