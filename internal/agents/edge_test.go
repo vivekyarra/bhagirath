@@ -1,6 +1,7 @@
 package agents_test
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"sync"
@@ -11,6 +12,7 @@ import (
 	"github.com/vivekyarra/bhagirath/internal/clock"
 	"github.com/vivekyarra/bhagirath/internal/config"
 	"github.com/vivekyarra/bhagirath/internal/domain"
+	"github.com/vivekyarra/bhagirath/internal/extract"
 	"github.com/vivekyarra/bhagirath/internal/store"
 )
 
@@ -360,5 +362,32 @@ func TestImportManualLogKeepsDatesAndIsIdempotent(t *testing.T) {
 	again, _ := h.e.ImportManualLog(h.ctx, strings.NewReader(csvText), "test")
 	if again.Imported != 0 {
 		t.Fatalf("re-import created complaints: %+v", again)
+	}
+}
+
+type brokenExtractor struct{}
+
+func (brokenExtractor) Extract(context.Context, string, domain.IssueType) (extract.Result, error) {
+	return extract.Result{IssueType: "not-a-valid-issue", Severity: 2, Language: "hi"}, nil // violates a CHECK constraint
+}
+
+// TestFailedIntakeDoesNotSwallowRetry: if storing a message fails part-way,
+// the provider's retry must be processed, not dropped as a duplicate.
+func TestFailedIntakeDoesNotSwallowRetry(t *testing.T) {
+	h := newHarness(t)
+	good := h.e.Extractor
+	h.e.Extractor = brokenExtractor{}
+	msg := agents.Message{Phone: "+910000000051", Text: "शिव मंदिर के पास गंदा पानी", ProviderMsgID: "wamid.retry-me"}
+	if _, err := h.e.HandleMessage(h.ctx, msg); err == nil {
+		t.Fatal("expected the first attempt to fail")
+	}
+	h.e.Extractor = good
+	out, err := h.e.HandleMessage(h.ctx, msg)
+	if err != nil || out.Complaint == nil || out.Complaint.ID == 0 {
+		t.Fatalf("retry was not processed: %+v %v", out, err)
+	}
+	n, _ := h.st.CountComplaints(h.ctx, store.ComplaintFilter{})
+	if n != 1 {
+		t.Fatalf("complaints = %d", n)
 	}
 }

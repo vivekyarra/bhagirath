@@ -24,6 +24,7 @@ import (
 	"github.com/vivekyarra/bhagirath/internal/config"
 	"github.com/vivekyarra/bhagirath/internal/jobs"
 	"github.com/vivekyarra/bhagirath/internal/notify"
+	"github.com/vivekyarra/bhagirath/internal/secure"
 	"github.com/vivekyarra/bhagirath/internal/telephony"
 	"github.com/vivekyarra/bhagirath/internal/whatsapp"
 )
@@ -256,4 +257,36 @@ func (s *Server) recoverer(h http.Handler) http.Handler {
 		}()
 		h.ServeHTTP(w, r)
 	})
+}
+
+// retry runs f up to 4 times with backoff. Every webhook path is idempotent
+// (the provider message id is recorded in the same transaction as its
+// effect), so a retry after a transient failure — a dropped database
+// connection, a failover, a provider timeout — can never double-count.
+func (s *Server) retry(ctx context.Context, what string, f func() error) {
+	wait := 500 * time.Millisecond
+	for attempt := 1; ; attempt++ {
+		err := f()
+		if err == nil || permanent(err) {
+			if err != nil {
+				s.Log.Warn(what+" rejected", "err", err)
+			}
+			return
+		}
+		if attempt == 4 {
+			s.Log.Error(what+" failed after retries", "err", err)
+			return
+		}
+		s.Log.Warn(what+" failed; retrying", "attempt", attempt, "err", err)
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(wait):
+		}
+		wait *= 3
+	}
+}
+
+func permanent(err error) bool {
+	return errors.Is(err, agents.ErrEmpty) || errors.Is(err, secure.ErrInvalidPhone)
 }

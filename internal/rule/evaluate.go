@@ -104,6 +104,9 @@ type Result struct {
 	ReasonHI    string       `json:"reason_hi"`
 	RuleVersion string       `json:"rule_version"`
 	RuleSHA256  string       `json:"rule_sha256"`
+	// Coalesced is set (by callers, never by Evaluate) when an evaluation
+	// request was folded into one already running for the same ward.
+	Coalesced bool `json:"-"`
 }
 
 // Evaluate applies the rule to a snapshot at time now. It is a pure function:

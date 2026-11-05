@@ -80,30 +80,31 @@ func (s *Server) whatsappWebhook(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) processWhatsApp(ctx context.Context, in whatsapp.Inbound) {
+	s.retry(ctx, "whatsapp message", func() error { return s.handleWhatsApp(ctx, in) })
+	_, _ = s.Dispatcher.Run(ctx)
+}
+
+func (s *Server) handleWhatsApp(ctx context.Context, in whatsapp.Inbound) error {
 	m := agents.Message{ProviderMsgID: in.ID, Phone: "+" + in.From, Text: in.Text, ReplyID: in.ReplyID}
 	switch in.Type {
 	case "location":
 		m.Point, m.LocationText, m.Text = &domain.Point{Lat: in.Lat, Lon: in.Lon}, in.Text, ""
 	case "audio":
 		if s.WhatsApp == nil {
-			return
+			return nil
 		}
 		data, ct, err := s.WhatsApp.GetMedia(ctx, in.MediaID)
 		if err != nil {
-			s.Log.Error("whatsapp media download failed", "err", err)
-			return
+			return fmt.Errorf("media download: %w", err)
 		}
 		m.Audio, m.AudioType = data, ct
 	case "image", "other":
 		if in.Text == "" {
-			return
+			return nil
 		}
 	}
-	if _, err := s.Engine.HandleMessage(ctx, m); err != nil {
-		s.Log.Error("whatsapp message failed", "err", err)
-		return
-	}
-	_, _ = s.Dispatcher.Run(ctx)
+	_, err := s.Engine.HandleMessage(ctx, m)
+	return err
 }
 
 // ---- Twilio Programmable Voice ----
@@ -218,15 +219,15 @@ func (s *Server) twilioIVR(w http.ResponseWriter, r *http.Request) {
 		}
 		if recURL != "" {
 			s.enqueue(func(ctx context.Context) {
-				data, ct, err := s.Twilio.FetchRecording(ctx, recURL)
-				if err != nil {
-					s.Log.Error("recording download failed", "err", err)
-					return
-				}
-				if _, err := s.Engine.Intake(ctx, agents.Inbound{Channel: channel, ProviderMsgID: callSID, Phone: phone, Audio: data, AudioType: ct,
-					Language: l, Consent: &consent, Actor: "resident:ivr"}); err != nil {
-					s.Log.Error("ivr intake failed", "err", err)
-				}
+				s.retry(ctx, "ivr recording", func() error {
+					data, ct, err := s.Twilio.FetchRecording(ctx, recURL)
+					if err != nil {
+						return fmt.Errorf("recording download: %w", err)
+					}
+					_, err = s.Engine.Intake(ctx, agents.Inbound{Channel: channel, ProviderMsgID: callSID, Phone: phone, Audio: data, AudioType: ct,
+						Language: l, Consent: &consent, Actor: "resident:ivr"})
+					return err
+				})
 				_, _ = s.Dispatcher.Run(ctx)
 			})
 		}
@@ -311,19 +312,22 @@ func (s *Server) exotel(w http.ResponseWriter, r *http.Request) {
 		}
 		phone := p.From
 		s.enqueue(func(ctx context.Context) {
-			req, _ := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
-			req.SetBasicAuth(s.Cfg.Exotel.APIKey, s.Cfg.Exotel.APIToken)
-			resp, err := http.DefaultClient.Do(req)
-			if err != nil {
-				s.Log.Error("exotel recording download", "err", err)
-				return
-			}
-			defer resp.Body.Close()
-			data, _ := io.ReadAll(io.LimitReader(resp.Body, 16<<20))
-			if _, err := s.Engine.Intake(ctx, agents.Inbound{Channel: domain.ChannelMissedCall, ProviderMsgID: p.CallSid, Phone: phone, Audio: data,
-				AudioType: resp.Header.Get("Content-Type"), Consent: &consent, Actor: "resident:ivr"}); err != nil {
-				s.Log.Error("exotel intake failed", "err", err)
-			}
+			s.retry(ctx, "exotel recording", func() error {
+				req, _ := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+				req.SetBasicAuth(s.Cfg.Exotel.APIKey, s.Cfg.Exotel.APIToken)
+				resp, err := http.DefaultClient.Do(req)
+				if err != nil {
+					return fmt.Errorf("recording download: %w", err)
+				}
+				defer resp.Body.Close()
+				if resp.StatusCode != http.StatusOK {
+					return fmt.Errorf("recording download: HTTP %d", resp.StatusCode)
+				}
+				data, _ := io.ReadAll(io.LimitReader(resp.Body, 16<<20))
+				_, err = s.Engine.Intake(ctx, agents.Inbound{Channel: domain.ChannelMissedCall, ProviderMsgID: p.CallSid, Phone: phone, Audio: data,
+					AudioType: resp.Header.Get("Content-Type"), Consent: &consent, Actor: "resident:ivr"})
+				return err
+			})
 			_, _ = s.Dispatcher.Run(ctx)
 		})
 	case "callback":

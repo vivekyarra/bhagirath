@@ -51,7 +51,47 @@ func wardLockKey(id string) int64 {
 
 // EvaluateWard runs the Fusion & Alert Agent for one ward and applies the
 // consequences (new alert, level change, resolution) atomically.
+//
+// Concurrent calls for the same ward are coalesced: if an evaluation is
+// already running, the caller returns at once and the running evaluation
+// makes one more pass afterwards, which sees every signal committed before
+// it starts. A burst of 1,000 complaints into one ward therefore costs a
+// handful of evaluations instead of 1,000 serialised ones, and the final
+// state is exactly what a single evaluation at the end would produce.
 func (e *Engine) EvaluateWard(ctx context.Context, wardID string) (rule.Result, error) {
+	e.evalMu.Lock()
+	if e.evalRuns == nil {
+		e.evalRuns = map[string]*wardRun{}
+	}
+	run := e.evalRuns[wardID]
+	if run == nil {
+		run = &wardRun{}
+		e.evalRuns[wardID] = run
+	}
+	if run.running {
+		run.again = true
+		e.evalMu.Unlock()
+		return rule.Result{WardID: wardID, Coalesced: true}, nil
+	}
+	run.running = true
+	e.evalMu.Unlock()
+	for {
+		res, err := e.evaluateWard(ctx, wardID)
+		e.evalMu.Lock()
+		if run.again && err == nil {
+			run.again = false
+			e.evalMu.Unlock()
+			continue
+		}
+		run.running, run.again = false, false
+		e.evalMu.Unlock()
+		return res, err
+	}
+}
+
+type wardRun struct{ running, again bool }
+
+func (e *Engine) evaluateWard(ctx context.Context, wardID string) (rule.Result, error) {
 	var res rule.Result
 	w, err := e.Store.GetWard(ctx, wardID)
 	if err != nil {

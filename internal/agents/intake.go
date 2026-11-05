@@ -54,6 +54,8 @@ type IntakeResult struct {
 	Extracted extract.Result
 }
 
+var errAlreadyProcessed = errors.New("provider message already processed")
+
 // ErrEmpty is returned when an inbound complaint has neither text nor audio.
 var ErrEmpty = errors.New("complaint has no text or audio")
 
@@ -93,18 +95,16 @@ func (e *Engine) Intake(ctx context.Context, in Inbound) (IntakeResult, error) {
 	if in.Actor == "" {
 		in.Actor = "resident"
 	}
+	// Idempotency: a provider retry of an already-stored message returns the
+	// stored complaint. The "seen" mark itself is written inside the same
+	// transaction as the complaint (below), so a failure part-way through can
+	// never mark a message as processed without storing it.
 	if in.ProviderMsgID != "" {
-		fresh, err := e.Store.MarkInboundSeen(ctx, string(in.Channel), in.ProviderMsgID, now)
-		if err != nil {
+		if c, err := e.Store.GetComplaintByProviderMsg(ctx, in.Channel, in.ProviderMsgID); err == nil {
+			res.Complaint, res.Duplicate = c, true
+			return res, nil
+		} else if !errors.Is(err, store.ErrNotFound) {
 			return res, err
-		}
-		if !fresh {
-			c, err := e.Store.GetComplaintByProviderMsg(ctx, in.Channel, in.ProviderMsgID)
-			if err == nil {
-				res.Complaint, res.Duplicate = c, true
-				return res, nil
-			}
-			return res, fmt.Errorf("duplicate delivery %s: %w", in.ProviderMsgID, err)
 		}
 	}
 
@@ -149,6 +149,15 @@ func (e *Engine) Intake(ctx context.Context, in Inbound) (IntakeResult, error) {
 	}
 
 	err = e.Store.Tx(ctx, func(tx *store.Store) error {
+		if in.ProviderMsgID != "" {
+			fresh, err := tx.MarkInboundSeen(ctx, string(in.Channel), in.ProviderMsgID, now)
+			if err != nil {
+				return err
+			}
+			if !fresh {
+				return errAlreadyProcessed
+			}
+		}
 		var rep *domain.Reporter
 		if strings.TrimSpace(in.Phone) != "" {
 			r, created, err := e.upsertReporter(ctx, tx, in, ex.Language, now)
@@ -237,6 +246,14 @@ func (e *Engine) Intake(ctx context.Context, in Inbound) (IntakeResult, error) {
 		}
 		return nil
 	})
+	if errors.Is(err, errAlreadyProcessed) {
+		// A concurrent delivery of the same message won the race.
+		c, err := e.Store.GetComplaintByProviderMsg(ctx, in.Channel, in.ProviderMsgID)
+		if err != nil {
+			return res, fmt.Errorf("duplicate delivery %s: %w", in.ProviderMsgID, err)
+		}
+		return IntakeResult{Complaint: c, Duplicate: true}, nil
+	}
 	if err != nil {
 		return res, err
 	}
