@@ -379,46 +379,17 @@ func (s *Server) reviewPage(w http.ResponseWriter, r *http.Request) {
 		"ByLang": byLang, "Wards": s.wardMap(ctx), "IssueTypes": domain.IssueTypes})
 }
 
-type langRates struct {
-	Lang  string
-	N     int
-	Rates asr.ErrorRates
-}
-
-func (s *Server) reviewedASR(r *http.Request) []domain.Complaint {
-	cs, _ := s.Engine.Store.ListComplaints(r.Context(), store.ComplaintFilter{TranscriptStatus: domain.TranscriptReviewed, Limit: 20000, IncludeDuplicates: true})
-	out := cs[:0]
-	for _, c := range cs {
-		if c.TranscriptASR != "" {
-			out = append(out, c)
-		}
-	}
-	return out
-}
-
 func (s *Server) asrSummary(r *http.Request) (int, *float64) {
-	cs := s.reviewedASR(r)
-	if len(cs) == 0 {
-		return 0, nil
+	n, agg, _, err := metrics.ASR(r.Context(), s.Engine.Store, !s.Cfg.Demo())
+	if err != nil || agg == nil {
+		return n, nil
 	}
-	var rs []asr.ErrorRates
-	for _, c := range cs {
-		rs = append(rs, asr.Compare(c.Transcript, c.TranscriptASR))
-	}
-	agg := asr.Aggregate(rs)
-	return len(cs), &agg.WER
+	return n, &agg.WER
 }
 
-func (s *Server) asrByLanguage(r *http.Request) []langRates {
-	groups := map[string][]asr.ErrorRates{}
-	for _, c := range s.reviewedASR(r) {
-		groups[c.Language] = append(groups[c.Language], asr.Compare(c.Transcript, c.TranscriptASR))
-	}
-	var out []langRates
-	for l, rs := range groups {
-		out = append(out, langRates{Lang: l, N: len(rs), Rates: asr.Aggregate(rs)})
-	}
-	return out
+func (s *Server) asrByLanguage(r *http.Request) []metrics.LanguageRates {
+	_, _, langs, _ := metrics.ASR(r.Context(), s.Engine.Store, !s.Cfg.Demo())
+	return langs
 }
 
 // reviewSubmit saves a human transcript (or correction of the machine one),
@@ -767,7 +738,8 @@ func (s *Server) metricsMarkdown(w http.ResponseWriter, r *http.Request) {
 	dep := s.Cfg.BaseURL + " (" + string(s.Cfg.Mode) + " mode)"
 	w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
 	w.Header().Set("Content-Disposition", `attachment; filename="METRICS.md"`)
-	_, _ = io.WriteString(w, metrics.Markdown(m, ts, dep))
+	n, agg, langs, _ := metrics.ASR(r.Context(), s.Engine.Store, !s.Cfg.Demo())
+	_, _ = io.WriteString(w, metrics.Markdown(m, ts, dep)+metrics.ASRMarkdown(n, agg, langs))
 }
 
 func (s *Server) settingsPage(w http.ResponseWriter, r *http.Request) {

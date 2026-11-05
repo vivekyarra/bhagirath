@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/vivekyarra/bhagirath/internal/asr"
 	"github.com/vivekyarra/bhagirath/internal/clock"
 	"github.com/vivekyarra/bhagirath/internal/store"
 )
@@ -151,4 +152,19 @@ func kv(m map[string]int) string {
 		parts[i] = fmt.Sprintf("%s %d", strings.ReplaceAll(k, "_", " "), m[k])
 	}
 	return strings.Join(parts, ", ")
+}
+
+// ASRMarkdown renders the speech-recognition section of METRICS.md.
+func ASRMarkdown(n int, agg *asr.ErrorRates, langs []LanguageRates) string {
+	var w strings.Builder
+	w.WriteString("\n## Speech recognition (machine vs volunteer-corrected transcripts)\n\n")
+	if n == 0 || agg == nil {
+		w.WriteString("No recordings with both a machine and a human transcript yet.\n")
+		return w.String()
+	}
+	fmt.Fprintf(&w, "Measured on **%d** recordings: WER **%.1f%%**, CER **%.1f%%** (pooled).\n\n| Language | Recordings | WER | CER |\n|---|---|---|---|\n", n, 100*agg.WER, 100*agg.CER)
+	for _, l := range langs {
+		fmt.Fprintf(&w, "| %s | %d | %.1f%% | %.1f%% |\n", l.Lang, l.N, 100*l.Rates.WER, 100*l.Rates.CER)
+	}
+	return w.String()
 }

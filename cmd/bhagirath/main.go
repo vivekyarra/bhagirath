@@ -235,7 +235,16 @@ func exportMetrics(ctx context.Context, a *app, out string) error {
 	if err != nil {
 		return err
 	}
-	md := metrics.Markdown(m, metrics.Targets(m, 0, nil), a.engine.Cfg.BaseURL+" ("+string(a.engine.Cfg.Mode)+" mode)")
+	n, agg, langs, err := metrics.ASR(ctx, a.store, true)
+	if err != nil {
+		return err
+	}
+	var wer *float64
+	if agg != nil {
+		wer = &agg.WER
+	}
+	md := metrics.Markdown(m, metrics.Targets(m, n, wer), a.engine.Cfg.BaseURL+" ("+string(a.engine.Cfg.Mode)+" mode)")
+	md += metrics.ASRMarkdown(n, agg, langs)
 	if out == "-" {
 		_, err := os.Stdout.WriteString(md)
 		return err
