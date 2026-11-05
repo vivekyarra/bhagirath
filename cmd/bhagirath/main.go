@@ -284,7 +284,7 @@ func serve(ctx context.Context, cfg *config.Config, a *app) error {
 	}
 	bg, cancelBG := context.WithCancel(ctx)
 	defer cancelBG()
-	if err := srv.Start(bg, 4); err != nil {
+	if err := srv.Start(bg, 8); err != nil {
 		return err
 	}
 	var wg sync.WaitGroup

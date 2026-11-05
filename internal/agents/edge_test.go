@@ -219,3 +219,29 @@ func TestConcurrentIntakeStress(t *testing.T) {
 }
 
 func ptrBool(b bool) *bool { return &b }
+
+func TestLocationPinAttachesInsteadOfCreatingComplaint(t *testing.T) {
+	h := newHarness(t)
+	// Pin first, then the complaint text: one complaint, located by GPS.
+	out, err := h.e.HandleMessage(h.ctx, agents.Message{Phone: "+910000000021", Point: near(10, 10), LocationText: "घर"})
+	if err != nil || out.Handled != "location" {
+		t.Fatalf("pin: %+v %v", out, err)
+	}
+	c := h.whatsapp("+910000000021", "नल से गंदा पानी आ रहा है", nil)
+	if c.Complaint.LocationMethod != domain.LocGPS || c.Complaint.WardID != ward {
+		t.Fatalf("kept pin not used: %+v", c.Complaint)
+	}
+	// Complaint first (no location), then the pin: the complaint gets located.
+	c2 := h.whatsapp("+910000000022", "बदबूदार पानी आ रहा है", nil)
+	if c2.Complaint.WardID != "" {
+		t.Fatal("expected unlocated complaint")
+	}
+	out, err = h.e.HandleMessage(h.ctx, agents.Message{Phone: "+910000000022", Point: near(-20, 30)})
+	if err != nil || out.Handled != "location" || out.Complaint == nil || out.Complaint.WardID != ward {
+		t.Fatalf("late pin: %+v %v", out, err)
+	}
+	n, _ := h.st.CountComplaints(h.ctx, store.ComplaintFilter{})
+	if n != 2 {
+		t.Fatalf("pins created complaints: %d", n)
+	}
+}

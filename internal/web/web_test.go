@@ -320,3 +320,72 @@ func fmtI(n int64) string {
 	}
 	return s
 }
+
+func TestRateLimitCannotBeSpoofed(t *testing.T) {
+	e := setup(t, config.ModeDemo)
+	codes := map[int]int{}
+	for i := 0; i < 15; i++ {
+		req, _ := http.NewRequest("POST", e.srv.URL+"/login", strings.NewReader("username=x&password=y"))
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		req.Header.Set("X-Forwarded-For", "10.0.0."+itoa(int64(i))+", 203.0.113.9")
+		resp, err := e.c.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		resp.Body.Close()
+		codes[resp.StatusCode]++
+	}
+	if codes[http.StatusTooManyRequests] == 0 {
+		t.Fatalf("rotating a spoofed X-Forwarded-For prefix bypassed the login limiter: %v", codes)
+	}
+}
+
+func TestSecurityHeaders(t *testing.T) {
+	e := setup(t, config.ModeDemo)
+	resp, err := e.c.Get(e.srv.URL + "/report")
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	for _, h := range []string{"Content-Security-Policy", "X-Content-Type-Options", "X-Frame-Options", "Referrer-Policy"} {
+		if resp.Header.Get(h) == "" {
+			t.Errorf("missing %s", h)
+		}
+	}
+	if strings.Contains(resp.Header.Get("Content-Security-Policy"), "unsafe-eval") {
+		t.Error("CSP allows eval")
+	}
+}
+
+func TestRecordingsNeedOperateRole(t *testing.T) {
+	e := setup(t, config.ModeDemo)
+	ctx := context.Background()
+	id, err := e.st.SaveMedia(ctx, domain.Media{SHA256: "a", ContentType: "audio/wav", Data: demo.SilentWAV(100), Kind: "audio"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	e.login("viewer", "viewer-password")
+	if code, _ := e.get("/app/media/" + itoa(id)); code != http.StatusForbidden {
+		t.Fatalf("viewer played a recording: %d", code)
+	}
+	e2 := setup(t, config.ModeDemo)
+	id2, _ := e2.st.SaveMedia(ctx, domain.Media{SHA256: "a", ContentType: "audio/wav", Data: demo.SilentWAV(100), Kind: "audio"})
+	e2.login("judge", "judge-password")
+	if code, _ := e2.get("/app/media/" + itoa(id2)); code != 200 {
+		t.Fatalf("demo judge could not play a recording: %d", code)
+	}
+}
+
+func TestMislabelledMediaIsNotRenderedInline(t *testing.T) {
+	e := setup(t, config.ModeDemo)
+	id, _ := e.st.SaveMedia(context.Background(), domain.Media{SHA256: "h", ContentType: "text/html", Data: []byte("<script>alert(1)</script>"), Kind: "audio"})
+	e.login("judge", "judge-password")
+	resp, err := e.c.Get(e.srv.URL + "/app/media/" + itoa(id))
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if resp.Header.Get("Content-Type") != "application/octet-stream" || !strings.HasPrefix(resp.Header.Get("Content-Disposition"), "attachment") {
+		t.Fatalf("served as %q / %q", resp.Header.Get("Content-Type"), resp.Header.Get("Content-Disposition"))
+	}
+}

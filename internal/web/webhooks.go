@@ -52,9 +52,25 @@ func (s *Server) whatsappWebhook(w http.ResponseWriter, r *http.Request) {
 			_, _ = s.Engine.Store.MarkDeliveredByProvider(r.Context(), st.ID)
 		}
 	}
+	// Messages from one sender in one delivery are processed in order, in one task.
+	bySender := map[string][]whatsapp.Inbound{}
+	var order []string
 	for _, m := range msgs {
-		m := m
-		if !s.enqueue(func(ctx context.Context) { s.processWhatsApp(ctx, m) }) {
+		if _, ok := bySender[m.From]; !ok {
+			order = append(order, m.From)
+		}
+		bySender[m.From] = append(bySender[m.From], m)
+	}
+	for _, from := range order {
+		batch := bySender[from]
+		if !s.enqueue(func(ctx context.Context) {
+			mu := s.senderLock(from)
+			mu.Lock()
+			defer mu.Unlock()
+			for _, m := range batch {
+				s.processWhatsApp(ctx, m)
+			}
+		}) {
 			// Queue full: ask Meta to retry later rather than drop the message.
 			http.Error(w, "busy", http.StatusServiceUnavailable)
 			return
@@ -67,7 +83,7 @@ func (s *Server) processWhatsApp(ctx context.Context, in whatsapp.Inbound) {
 	m := agents.Message{ProviderMsgID: in.ID, Phone: "+" + in.From, Text: in.Text, ReplyID: in.ReplyID}
 	switch in.Type {
 	case "location":
-		m.Point = &domain.Point{Lat: in.Lat, Lon: in.Lon}
+		m.Point, m.LocationText, m.Text = &domain.Point{Lat: in.Lat, Lon: in.Lon}, in.Text, ""
 	case "audio":
 		if s.WhatsApp == nil {
 			return

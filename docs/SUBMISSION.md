@@ -21,3 +21,10 @@ Fill every `[…]` with real values. Every number must trace to `pilot/METRICS.m
 - Testimonials: [partner name, role]; [official or doctor name, role] (with permission).
 
 **Built with:** Go, PostgreSQL, WhatsApp Cloud API, Twilio/Exotel, Sarvam ASR, Leaflet/OpenStreetMap; built in AgentFoundry [details].
+
+## How this maps to the rubric (JUDGING.md: four criteria × 25%; tiebreakers proven impact, then size)
+
+- **Size:** 1.61 lakh of 63.96 lakh samples contaminated in 2025-26 (Rajya Sabha); 8.95 lakh affected residents in Bhopal and Indore (CAG 2019). Works for any ward or village.
+- **Severity:** Indore, at least 16 deaths and 434 admitted to hospital after months of ignored complaints.
+- **Quality:** the five-agent accountability loop, no smartphone needed, a frozen deterministic rule backtested honestly, a tested and deployed codebase.
+- **Proven impact (tiebreaker):** paste the `pilot/METRICS.md` numbers here. Real numbers, even small ones, beat projections.

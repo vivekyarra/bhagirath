@@ -188,9 +188,13 @@ func (l *rateLimiter) allow(key string, perMinute int) bool {
 	return l.hits[key] <= perMinute
 }
 
+// clientIP identifies the caller for rate limiting. Behind a cloud proxy the
+// LAST X-Forwarded-For entry is the one the proxy appended; earlier entries
+// are client-controlled and would let an attacker dodge the limiter.
 func clientIP(r *http.Request) string {
 	if f := r.Header.Get("X-Forwarded-For"); f != "" {
-		return strings.TrimSpace(strings.Split(f, ",")[0])
+		parts := strings.Split(f, ",")
+		return strings.TrimSpace(parts[len(parts)-1])
 	}
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {

@@ -20,14 +20,14 @@
     <a href="/app/complaints" {{if or (eq .Page "complaints") (eq .Page "complaint")}}class="on"{{end}}>Complaints</a>
     <a href="/app/escalations" {{if or (eq .Page "escalations") (eq .Page "escalation")}}class="on"{{end}}>Escalations</a>
     <a href="/app/review" {{if eq .Page "review"}}class="on"{{end}}>Review</a>
-    <a href="/app/signals" {{if eq .Page "signals"}}class="on"{{end}}>Tests &amp; illness</a>
-    {{if .CanOp}}<a href="/app/volunteer" {{if eq .Page "volunteer"}}class="on"{{end}}>Volunteer line</a>{{end}}
+    <a href="/app/signals" {{if eq .Page "signals"}}class="on"{{end}}>Signals</a>
+    {{if .CanOp}}<a href="/app/volunteer" {{if eq .Page "volunteer"}}class="on"{{end}}>Volunteer</a>{{end}}
     <a href="/app/outbox" {{if eq .Page "outbox"}}class="on"{{end}}>Outbox</a>
     <a href="/app/pilot" {{if eq .Page "pilot"}}class="on"{{end}}>Pilot</a>
     {{if and .Demo .CanSim}}<a href="/app/demo" {{if eq .Page "demo"}}class="on"{{end}}>▶ Demo</a>{{end}}
     <a href="/app/settings" {{if eq .Page "settings"}}class="on"{{end}}>Settings</a>
   </nav>
-  <div class="who"><span>{{.User}} · {{.Role}}</span><form method="post" action="/logout" class="inline-form"><input type="hidden" name="csrf" value="{{.CSRF}}"><button class="btn small">Log out</button></form></div>
+  <div class="who"><span title="role: {{.Role}}">{{.User}}</span><form method="post" action="/logout" class="inline-form"><input type="hidden" name="csrf" value="{{.CSRF}}"><button class="btn small">Log out</button></form></div>
   {{else}}<nav class="nav" aria-label="Public"><a href="/report" {{if eq .Page "report"}}class="on"{{end}}>Report a problem</a><a href="/impact" {{if eq .Page "impact"}}class="on"{{end}}>Public impact</a></nav>
   <div class="who"><a class="btn small" href="/login">Partner login</a></div>{{end}}
 </div></header>

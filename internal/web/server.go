@@ -10,6 +10,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"io/fs"
 	"log/slog"
 	"net/http"
@@ -51,6 +52,16 @@ type Server struct {
 	work    chan func(context.Context)
 	wg      sync.WaitGroup
 	limiter *rateLimiter
+	impact  impactCache
+	senders [64]sync.Mutex // per-sender ordering of chat messages
+}
+
+// senderLock serialises processing of messages from the same phone so a
+// location pin and the complaint text that follows are handled in order.
+func (s *Server) senderLock(phone string) *sync.Mutex {
+	h := fnv.New32a()
+	h.Write([]byte(phone))
+	return &s.senders[h.Sum32()%uint32(len(s.senders))]
 }
 
 // Start prepares templates and background workers for webhook processing.
@@ -61,7 +72,7 @@ func (s *Server) Start(ctx context.Context, workers int) error {
 	}
 	s.tpl = t
 	s.limiter = newRateLimiter()
-	s.work = make(chan func(context.Context), 256)
+	s.work = make(chan func(context.Context), 1024)
 	for i := 0; i < workers; i++ {
 		s.wg.Add(1)
 		go func() {
@@ -111,7 +122,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /{$}", s.landing)
 	mux.HandleFunc("GET /report", s.reportForm)
 	mux.HandleFunc("POST /report", s.limit("report", 10, s.reportSubmit))
-	mux.HandleFunc("GET /impact", s.impact)
+	mux.HandleFunc("GET /impact", s.impactPage)
 	mux.HandleFunc("GET /api/v1/impact", s.impactJSON)
 	mux.HandleFunc("GET /o/{token}", s.officialPage)
 	mux.HandleFunc("POST /o/{token}/ack", s.limit("official", 30, s.officialAck))

@@ -125,3 +125,32 @@ func TestTxRollback(t *testing.T) {
 		t.Fatal("rolled-back ward persisted")
 	}
 }
+
+func TestRetentionPurges(t *testing.T) {
+	s := storetest.New(t)
+	ctx := context.Background()
+	past := t0.Add(-time.Hour)
+	id, err := s.SaveMedia(ctx, domain.Media{SHA256: "x", ContentType: "audio/wav", Data: []byte{1, 2, 3}, Kind: "audio", CreatedAt: t0, DeleteAfter: &past})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if n, err := s.PurgeExpiredMedia(ctx, t0); err != nil || n != 1 {
+		t.Fatalf("purge media: %d %v", n, err)
+	}
+	m, _ := s.GetMedia(ctx, id)
+	if len(m.Data) != 0 || m.SHA256 != "x" {
+		t.Fatal("audio bytes not deleted, or audit metadata lost")
+	}
+	old := t0.Add(-48 * time.Hour)
+	r, _, _ := s.CreateReporter(ctx, domain.Reporter{Ref: "R-OLD", PhoneHash: "h-old", PhoneEnc: []byte("enc"), Kind: domain.KindResident, ConsentAskedAt: &old, CreatedAt: old})
+	kept, _, _ := s.CreateReporter(ctx, domain.Reporter{Ref: "R-OK", PhoneHash: "h-ok", PhoneEnc: []byte("enc"), Kind: domain.KindResident, ConsentAt: &old, CreatedAt: old})
+	if n, err := s.PurgeUnconsentedPhones(ctx, t0.Add(-24*time.Hour)); err != nil || n != 1 {
+		t.Fatalf("purge phones: %d %v", n, err)
+	}
+	if got, _ := s.GetReporter(ctx, r.ID); len(got.PhoneEnc) != 0 {
+		t.Fatal("unconsented number kept")
+	}
+	if got, _ := s.GetReporter(ctx, kept.ID); len(got.PhoneEnc) == 0 {
+		t.Fatal("consented number purged")
+	}
+}
