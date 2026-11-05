@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -62,6 +63,11 @@ func (e *Engine) HandleMessage(ctx context.Context, m Message) (Outcome, error) 
 	phone, err := secure.NormalizePhone(m.Phone)
 	if err != nil {
 		return Outcome{Handled: "ignored", Detail: "invalid sender"}, nil
+	}
+	if o, err := e.Store.GetOfficialByPhoneHash(ctx, e.Vault.HashPhone(phone)); err == nil {
+		return e.officialMessage(ctx, o, m)
+	} else if !errors.Is(err, store.ErrNotFound) {
+		return Outcome{}, err
 	}
 	rep, err := e.Store.GetReporterByHash(ctx, e.Vault.HashPhone(phone))
 	known := err == nil
@@ -338,4 +344,46 @@ func (e *Engine) RegisterSignalReporter(ctx context.Context, phone string, kind 
 		return nil
 	})
 	return out, err
+}
+
+var ackRe = regexp.MustCompile(`(?i)\b(?:ack|acknowledge|ok|received|प्राप्त|मिला)\b.*?\b(ESC-\d{1,9})\b`)
+
+// officialMessage lets an official acknowledge an escalation by replying on
+// WhatsApp ("ACK ESC-000123" or the Acknowledge button). Only escalations
+// addressed to that official can be acknowledged this way.
+func (e *Engine) officialMessage(ctx context.Context, o domain.Official, m Message) (Outcome, error) {
+	var esc domain.Escalation
+	var err error
+	switch {
+	case strings.HasPrefix(m.ReplyID, "ack:"):
+		var id int64
+		if _, err := fmt.Sscan(strings.TrimPrefix(m.ReplyID, "ack:"), &id); err != nil {
+			return Outcome{Handled: "ignored", Detail: "bad button"}, nil
+		}
+		esc, err = e.Store.GetEscalation(ctx, id)
+	default:
+		mm := ackRe.FindStringSubmatch(m.Text)
+		if mm == nil {
+			return e.replyOfficial(ctx, o, "Bhagirath: to acknowledge an escalation, reply ACK followed by its reference, e.g. ACK ESC-000123.")
+		}
+		esc, err = e.Store.GetEscalationByRef(ctx, strings.ToUpper(mm[1]))
+	}
+	if err != nil || esc.OfficialID != o.ID {
+		return e.replyOfficial(ctx, o, "Bhagirath: that reference is not one of your escalations. Please check the reference in the message you received.")
+	}
+	if err := e.Acknowledge(ctx, esc.ID, "whatsapp", "", "official:"+o.Name); err != nil && !errors.Is(err, ErrClosed) {
+		return Outcome{}, err
+	}
+	out, err := e.replyOfficial(ctx, o, fmt.Sprintf("Bhagirath: %s acknowledged. Thank you. Upload a repair photo or a passing retest at the link in the original message when it is fixed; the resident will be asked to confirm.", esc.Ref))
+	out.Handled, out.Detail = "official_ack", esc.Ref
+	return out, err
+}
+
+func (e *Engine) replyOfficial(ctx context.Context, o domain.Official, body string) (Outcome, error) {
+	err := e.Store.Tx(ctx, func(tx *store.Store) error {
+		msg := domain.OutboundMessage{Kind: "ack", Channel: "whatsapp", RecipientType: "official", RecipientID: o.ID, RecipientLabel: o.Name + " (" + o.Role + ")",
+			Language: "en", Body: body, Status: domain.MsgQueued, CreatedAt: e.now(), NextAttemptAt: e.now()}
+		return tx.EnqueueMessage(ctx, &msg)
+	})
+	return Outcome{Handled: "official", Detail: body}, err
 }

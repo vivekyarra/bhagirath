@@ -89,8 +89,9 @@ func (e *Engine) messageToReporter(ctx context.Context, st *store.Store, r domai
 
 // Interactive describes buttons (WhatsApp) / keypad options (voice) for a message.
 type Interactive struct {
-	Kind      string `json:"kind"` // callback
-	ClosureID int64  `json:"closure_id,omitempty"`
+	Kind         string `json:"kind"` // callback | ack
+	ClosureID    int64  `json:"closure_id,omitempty"`
+	EscalationID int64  `json:"escalation_id,omitempty"`
 }
 
 func issueLabel(it domain.IssueType, l string) string { return i18n.Issue(string(it), l) }

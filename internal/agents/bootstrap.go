@@ -45,6 +45,7 @@ func (e *Engine) SyncLadder(ctx context.Context, l *config.Ladder) error {
 				if o.PhoneEnc, err = e.Vault.Encrypt(p); err != nil {
 					return err
 				}
+				o.PhoneHash = e.Vault.HashPhone(p)
 			}
 			idx := slices.IndexFunc(existing, func(x domain.Official) bool { return x.Name == o.Name && x.LadderLevel == o.LadderLevel })
 			if idx >= 0 {

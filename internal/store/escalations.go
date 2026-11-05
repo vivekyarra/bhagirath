@@ -9,28 +9,33 @@ import (
 	"github.com/vivekyarra/bhagirath/internal/domain"
 )
 
-const officialCols = `id, name, role, department, ward_ids, phone_enc, email, ladder_level, grievance_channel, preferred_channel, language, active`
+const officialCols = `id, name, role, department, ward_ids, phone_enc, COALESCE(phone_hash,''), email, ladder_level, grievance_channel, preferred_channel, language, active`
 
 func scanOfficial(r pgx.Row) (domain.Official, error) {
 	var o domain.Official
-	err := r.Scan(&o.ID, &o.Name, &o.Role, &o.Department, &o.WardIDs, &o.PhoneEnc, &o.Email, &o.LadderLevel, &o.GrievanceChannel,
+	err := r.Scan(&o.ID, &o.Name, &o.Role, &o.Department, &o.WardIDs, &o.PhoneEnc, &o.PhoneHash, &o.Email, &o.LadderLevel, &o.GrievanceChannel,
 		&o.PreferredChannel, &o.Language, &o.Active)
 	return o, notFound(err)
 }
 
+// GetOfficialByPhoneHash finds an active official by keyed phone hash.
+func (s *Store) GetOfficialByPhoneHash(ctx context.Context, hash string) (domain.Official, error) {
+	return scanOfficial(s.q.QueryRow(ctx, `SELECT `+officialCols+` FROM official WHERE phone_hash=$1 AND active ORDER BY id LIMIT 1`, hash))
+}
+
 // CreateOfficial inserts an official.
 func (s *Store) CreateOfficial(ctx context.Context, o *domain.Official) error {
-	return s.q.QueryRow(ctx, `INSERT INTO official(name, role, department, ward_ids, phone_enc, email, ladder_level, grievance_channel,
-		preferred_channel, language, active) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id`,
-		o.Name, o.Role, o.Department, o.WardIDs, o.PhoneEnc, o.Email, o.LadderLevel, o.GrievanceChannel, defaultStr(o.PreferredChannel, "email"),
+	return s.q.QueryRow(ctx, `INSERT INTO official(name, role, department, ward_ids, phone_enc, phone_hash, email, ladder_level, grievance_channel,
+		preferred_channel, language, active) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING id`,
+		o.Name, o.Role, o.Department, o.WardIDs, o.PhoneEnc, nullStr(o.PhoneHash), o.Email, o.LadderLevel, o.GrievanceChannel, defaultStr(o.PreferredChannel, "email"),
 		defaultStr(o.Language, "en"), o.Active).Scan(&o.ID)
 }
 
 // UpdateOfficial writes all fields.
 func (s *Store) UpdateOfficial(ctx context.Context, o domain.Official) error {
 	_, err := s.q.Exec(ctx, `UPDATE official SET name=$2, role=$3, department=$4, ward_ids=$5, phone_enc=$6, email=$7, ladder_level=$8,
-		grievance_channel=$9, preferred_channel=$10, language=$11, active=$12 WHERE id=$1`,
-		o.ID, o.Name, o.Role, o.Department, o.WardIDs, o.PhoneEnc, o.Email, o.LadderLevel, o.GrievanceChannel, o.PreferredChannel, o.Language, o.Active)
+		grievance_channel=$9, preferred_channel=$10, language=$11, active=$12, phone_hash=$13 WHERE id=$1`,
+		o.ID, o.Name, o.Role, o.Department, o.WardIDs, o.PhoneEnc, o.Email, o.LadderLevel, o.GrievanceChannel, o.PreferredChannel, o.Language, o.Active, nullStr(o.PhoneHash))
 	return err
 }
 
