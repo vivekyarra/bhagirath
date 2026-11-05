@@ -11,3 +11,10 @@ run: build
 	./bin/bhagirath serve
 up:
 	docker compose up --build
+
+.PHONY: check
+check:
+	test -z "$$(gofmt -l .)" || (gofmt -l . && false)
+	go vet ./...
+	GOTOOLCHAIN=go1.26.10 go run honnef.co/go/tools/cmd/staticcheck@v0.8.2 ./...
+	BHAGIRATH_TEST_DATABASE_URL="$(TEST_DB)" go test -race -count=1 ./...
