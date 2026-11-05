@@ -36,7 +36,14 @@ type Inbound struct {
 	HasSmartphone *bool
 	At            time.Time
 	Actor         string // "resident", "volunteer:<user>", "simulator"
+	// Backfill marks complaints migrated from the manual pilot log kept before
+	// the software went live; their original timestamps (up to 60 days old)
+	// are preserved instead of being clamped to "now".
+	Backfill bool
 }
+
+// MaxBackfill is how old a migrated manual-log complaint may be.
+const MaxBackfill = 60 * 24 * time.Hour
 
 // IntakeResult reports what happened.
 type IntakeResult struct {
@@ -73,7 +80,14 @@ func (e *Engine) Intake(ctx context.Context, in Inbound) (IntakeResult, error) {
 	}
 	now := e.now()
 	at := in.At
-	if at.IsZero() || at.After(now) || now.Sub(at) > 7*24*time.Hour {
+	maxAge := 7 * 24 * time.Hour
+	if in.Backfill {
+		maxAge = MaxBackfill
+	}
+	if at.IsZero() || at.After(now) || now.Sub(at) > maxAge {
+		if in.Backfill && !at.IsZero() {
+			return res, fmt.Errorf("date %s is outside the last %d days", at.Format("2006-01-02"), int(MaxBackfill.Hours()/24))
+		}
 		at = now
 	}
 	if in.Actor == "" {
@@ -176,7 +190,7 @@ func (e *Engine) Intake(ctx context.Context, in Inbound) (IntakeResult, error) {
 		}
 		if rep != nil {
 			c.ReporterID, c.ReporterRef = &rep.ID, rep.Ref
-			if dup, ok, err := e.findDuplicate(ctx, tx, rep.ID, c, now); err != nil {
+			if dup, ok, err := e.findDuplicate(ctx, tx, rep.ID, c, c.CreatedAt); err != nil {
 				return err
 			} else if ok {
 				c.DuplicateOf = &dup.ID
@@ -188,7 +202,7 @@ func (e *Engine) Intake(ctx context.Context, in Inbound) (IntakeResult, error) {
 		}
 		res.Complaint = c
 		e.event(ctx, tx, in.Actor, "complaint.created", "complaint", c.Ref, c.WardID, map[string]any{
-			"channel": c.Channel, "issue_type": c.IssueType, "location_method": c.LocationMethod, "duplicate": res.Duplicate,
+			"channel": c.Channel, "issue_type": c.IssueType, "location_method": c.LocationMethod, "duplicate": res.Duplicate, "backfill": in.Backfill,
 			"transcript_status": c.TranscriptStatus, "extractor": ex.Extractor, "non_smartphone": c.Channel.NonSmartphone()})
 
 		if rep != nil {
@@ -202,8 +216,10 @@ func (e *Engine) Intake(ctx context.Context, in Inbound) (IntakeResult, error) {
 				}
 			}
 			res.Reporter = rep
-			if err := e.afterIntakeMessages(ctx, tx, *rep, c, loc, wards); err != nil {
-				return err
+			if !in.Backfill {
+				if err := e.afterIntakeMessages(ctx, tx, *rep, c, loc, wards); err != nil {
+					return err
+				}
 			}
 		}
 		if res.Duplicate {
@@ -287,13 +303,16 @@ func waterQuality(it domain.IssueType) bool {
 	return it == domain.IssueDirtyWater || it == domain.IssueFoulSmell || it == domain.IssueSewageMixing
 }
 
-func (e *Engine) findDuplicate(ctx context.Context, tx *store.Store, reporterID int64, c domain.Complaint, now time.Time) (domain.Complaint, bool, error) {
-	recent, err := tx.RecentByReporter(ctx, reporterID, now.Add(-dedupeWindow))
+// findDuplicate looks for the same household's earlier report of the same
+// problem within dedupeWindow of at (the complaint's own time, so migrated
+// manual-log entries are de-duplicated against each other too).
+func (e *Engine) findDuplicate(ctx context.Context, tx *store.Store, reporterID int64, c domain.Complaint, at time.Time) (domain.Complaint, bool, error) {
+	recent, err := tx.RecentByReporter(ctx, reporterID, at.Add(-dedupeWindow))
 	if err != nil {
 		return domain.Complaint{}, false, err
 	}
 	for _, r := range recent {
-		if r.Status.Closed() {
+		if r.Status.Closed() || r.CreatedAt.After(at) {
 			continue
 		}
 		same := r.IssueType == c.IssueType || (waterQuality(r.IssueType) && waterQuality(c.IssueType))

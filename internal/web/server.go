@@ -151,6 +151,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /app/review/{ref}", s.auth("operate", s.reviewSubmit))
 	mux.HandleFunc("GET /app/volunteer", s.auth("operate", s.volunteerForm))
 	mux.HandleFunc("POST /app/volunteer", s.auth("operate", s.volunteerSubmit))
+	mux.HandleFunc("POST /app/volunteer/import", s.auth("operate", s.manualImport))
 	mux.HandleFunc("GET /app/signals", s.auth("read", s.signalsPage))
 	mux.HandleFunc("POST /app/signals/test", s.auth("operate", s.addTest))
 	mux.HandleFunc("POST /app/signals/tests.csv", s.auth("operate", s.importTests))
