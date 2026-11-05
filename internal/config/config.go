@@ -38,6 +38,8 @@ type Config struct {
 	JudgePassword string
 
 	PartnerName           string
+	MissedCallNumber      string // shown on the flyer and public pages
+	WhatsAppNumber        string
 	AdvisoryReviewedBy    string
 	RequirePartnerSignoff bool
 	AudioRetention        time.Duration
@@ -144,6 +146,8 @@ func Load() (*Config, error) {
 		JudgePassword: os.Getenv("BHAGIRATH_JUDGE_PASSWORD"),
 
 		PartnerName:           env("BHAGIRATH_PARTNER_NAME", "the pilot partner"),
+		MissedCallNumber:      os.Getenv("BHAGIRATH_MISSED_CALL_NUMBER"),
+		WhatsAppNumber:        os.Getenv("BHAGIRATH_WHATSAPP_NUMBER"),
 		AdvisoryReviewedBy:    os.Getenv("BHAGIRATH_ADVISORY_REVIEWED_BY"),
 		RequirePartnerSignoff: envBool("BHAGIRATH_REQUIRE_PARTNER_SIGNOFF", true),
 		AudioRetention:        time.Duration(envInt("BHAGIRATH_AUDIO_RETENTION_DAYS", 90)) * 24 * time.Hour,

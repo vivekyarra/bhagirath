@@ -389,3 +389,34 @@ func TestMislabelledMediaIsNotRenderedInline(t *testing.T) {
 		t.Fatalf("served as %q / %q", resp.Header.Get("Content-Type"), resp.Header.Get("Content-Disposition"))
 	}
 }
+
+func TestFlyerQRAndProofLog(t *testing.T) {
+	e := setup(t, config.ModeDemo)
+	code, body := e.get("/flyer?ward=" + demo.Urban)
+	if code != 200 || !strings.Contains(body, "/qr.svg?ward="+demo.Urban) || !strings.Contains(body, "सरकारी सेवा नहीं") {
+		t.Fatalf("flyer: %d", code)
+	}
+	code, svg := e.get("/qr.svg?ward=" + demo.Urban)
+	if code != 200 || !strings.HasPrefix(svg, "<svg") || strings.Count(svg, "h1v1") < 100 {
+		t.Fatalf("qr: %d %.80s", code, svg)
+	}
+	if code, _ := e.get("/qr.svg?ward=../../etc"); code != 404 {
+		t.Fatalf("qr for unknown ward = %d", code)
+	}
+	if code, body := e.get("/report?ward=" + demo.Urban); code != 200 || !strings.Contains(body, `value="`+demo.Urban+`" selected`) {
+		t.Fatal("report form did not preselect the ward from the QR link")
+	}
+	tok := e.login("judge", "judge-password")
+	for _, step := range []string{"story-missed-call", "story-neighbours", "story-timeout", "story-fake-fix", "story-real-fix"} {
+		if code, _, loc := e.post("/app/demo/"+step, url.Values{"csrf": {tok}}); code != http.StatusSeeOther || strings.Contains(loc, "Could+not") {
+			t.Fatalf("%s: %d %s", step, code, loc)
+		}
+	}
+	_, impact := e.get("/impact")
+	if !strings.Contains(impact, "said NOT fixed") || !strings.Contains(impact, "confirmed fixed") {
+		t.Fatalf("proof log does not show the rejected and the confirmed claim: %.300s", impact)
+	}
+	if strings.Contains(impact, "0000000") {
+		t.Fatal("phone digits on the public page")
+	}
+}

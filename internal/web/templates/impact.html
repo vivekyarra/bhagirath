@@ -20,6 +20,12 @@
     <div class="scroll"><table class="data"><thead><tr><th>Ward / village</th><th>Alert now</th><th class="num">Complaints</th><th class="num">Verified fixes</th><th class="num">Median hours to acknowledge</th><th class="num">Median days to verified fix</th></tr></thead><tbody>
     {{range .Data.Wards}}<tr><td>{{.Ward.Name}}</td><td><span class="badge lvl-{{.Level}}">{{.Level.Title}}</span></td><td class="num">{{.Complaints}}</td><td class="num">{{.Verified}}</td><td class="num">{{f1 .MedianAckHrs}}</td><td class="num">{{f1 .MedianFixDays}}</td></tr>{{end}}
     </tbody></table></div></div>
+  <div class="card flush"><div class="head"><h2>Proof log — every fix claim and what the resident said</h2><small>No names, numbers or locations</small></div>
+    <div class="scroll"><table class="data"><thead><tr><th>Complaint</th><th>Ward</th><th>Problem</th><th>Reported</th><th>Official claimed fixed</th><th>Evidence</th><th>Resident</th><th class="num">Days to verified fix</th></tr></thead><tbody>
+    {{range .Data.Proof}}<tr><td class="mono">{{.Ref}}</td><td>{{.WardName}}</td><td>{{issue .IssueType}}<br><small>{{label .Channel}}</small></td><td>{{date .ReportedAt}}</td><td>{{date .ClaimedAt}}</td><td>{{label .Evidence}}</td>
+      <td>{{if eq .Result "confirmed"}}<span class="badge lvl-none">confirmed fixed</span>{{else if eq .Result "denied"}}<span class="badge lvl-critical">said NOT fixed → reopened</span>{{else}}<span class="badge lvl-warning">no answer → reopened</span>{{end}}{{if eq .VerifyVia "field_visit"}}<br><small>partner field visit</small>{{end}}</td>
+      <td class="num">{{f1 .DaysToVerify}}</td></tr>{{else}}<tr><td colspan="8" class="muted">No fix claims decided yet.</td></tr>{{end}}
+    </tbody></table></div></div>
   <div class="card flush"><div class="head"><h2>Progress against the hackathon targets</h2></div>
     <div class="scroll"><table class="data"><thead><tr><th>Metric</th><th>Actual</th><th>Target</th><th>Status</th></tr></thead><tbody>
     {{range .Data.Targets}}<tr><td>{{.Metric}}</td><td class="mono">{{.Actual}}</td><td>{{.Target}}</td><td>{{if .Met}}{{if yes .Met}}<span class="badge lvl-none">met</span>{{else}}<span class="badge">below</span>{{end}}{{else}}—{{end}}</td></tr>{{end}}

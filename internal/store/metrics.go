@@ -3,6 +3,8 @@ package store
 import (
 	"context"
 	"time"
+
+	"github.com/vivekyarra/bhagirath/internal/domain"
 )
 
 // Metrics are the pilot impact numbers (spec Sections 3.2 and 14.4), computed
@@ -246,4 +248,48 @@ func (s *Store) ComputeMetrics(ctx context.Context, excludeDemo bool, now time.T
 		return m, err
 	}
 	return m, nil
+}
+
+// ProofEntry is one fix claim and what the resident said about it. It holds
+// no personal data: no phone, name, transcript or location text.
+type ProofEntry struct {
+	Ref          string
+	WardName     string
+	IssueType    domain.IssueType
+	Channel      string
+	ReportedAt   time.Time
+	ClaimedAt    time.Time
+	DecidedAt    *time.Time
+	Evidence     string
+	Result       string
+	VerifyVia    string
+	DaysToVerify *float64
+}
+
+// ProofLog lists the most recent decided fix claims (verified and rejected),
+// newest first — the public, checkable record of the accountability loop.
+func (s *Store) ProofLog(ctx context.Context, excludeDemo bool, limit int) ([]ProofEntry, error) {
+	demo := ""
+	if excludeDemo {
+		demo = " AND NOT w.demo"
+	}
+	rows, err := s.q.Query(ctx, `SELECT c.ref, w.name, c.issue_type, c.channel, c.created_at, x.claimed_at, x.decided_at, x.evidence_type,
+			x.callback_result, x.callback_channel,
+			CASE WHEN x.verified THEN EXTRACT(EPOCH FROM (x.decided_at - c.created_at))/86400 END
+		FROM closure x JOIN complaint c ON c.id = x.complaint_id JOIN ward w ON w.id = c.ward_id
+		WHERE x.decided_at IS NOT NULL`+demo+`
+		ORDER BY x.decided_at DESC, x.id DESC LIMIT $1`, clampLimit(limit, 50, 500))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []ProofEntry
+	for rows.Next() {
+		var e ProofEntry
+		if err := rows.Scan(&e.Ref, &e.WardName, &e.IssueType, &e.Channel, &e.ReportedAt, &e.ClaimedAt, &e.DecidedAt, &e.Evidence, &e.Result, &e.VerifyVia, &e.DaysToVerify); err != nil {
+			return nil, err
+		}
+		out = append(out, e)
+	}
+	return out, rows.Err()
 }

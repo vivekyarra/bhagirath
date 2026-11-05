@@ -157,3 +157,12 @@ audio { width: 100%; }
   body { background: #fff; color: #000; }
   .card { box-shadow: none; border-color: #bbb; break-inside: avoid; }
 }
+.flyer { background: #fff; color: #111; border: 3px solid #0d6b8c; border-radius: 16px; padding: 22px; max-width: 640px; margin: 0 auto; }
+.flyer h1 { font-size: 2rem; color: #0d6b8c; margin: 0; } .flyer h2 { font-size: 1.1rem; margin: 2px 0 10px; color: #333; }
+.flyer-num { font-size: 2.6rem; font-weight: 800; text-align: center; background: #e3f1f6; border-radius: 12px; padding: 8px; margin: 10px 0 14px; letter-spacing: .03em; color: #0b4f68; }
+.flyer-body { display: grid; grid-template-columns: 1fr 160px; gap: 14px; align-items: start; }
+.flyer ol { font-size: 1.05rem; padding-left: 20px; margin: 0; } .flyer li { margin-bottom: 8px; } .flyer li span { display: block; font-size: .85rem; color: #555; }
+.flyer-qr { text-align: center; } .flyer-qr img { width: 150px; height: 150px; } .flyer-qr small { display: block; color: #444; }
+.flyer-foot { font-size: .8rem; color: #444; border-top: 1px solid #ccc; padding-top: 8px; margin-top: 12px; }
+@media (max-width: 560px) { .flyer-body { grid-template-columns: 1fr; } }
+@media print { .flyer { border-width: 2px; max-width: none; } main { padding: 0; } }

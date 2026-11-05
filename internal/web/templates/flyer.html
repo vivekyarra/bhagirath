@@ -1,0 +1,19 @@
+{{define "content"}}{{$d := .Data}}
+<div class="no-print spread" style="margin-bottom:12px"><form method="get" class="row" style="flex-wrap:nowrap"><label for="fw">Ward</label><select id="fw" name="ward" style="max-width:240px">{{range $d.Wards}}<option value="{{.ID}}" {{if eq .ID $d.Ward.ID}}selected{{end}}>{{.Name}}</option>{{end}}</select><button class="btn small">Show</button></form>
+  <button class="btn primary" data-print>Print / save as PDF</button>{{if not $d.MissedCall}}<span class="note">Set BHAGIRATH_MISSED_CALL_NUMBER to print the real number.</span>{{end}}</div>
+<div class="flyer">
+  <div class="flyer-head"><h1 lang="hi">गंदा पानी? मिस्ड कॉल दें।</h1><h2>Dirty or smelly tap water? Give a missed call.</h2></div>
+  <div class="flyer-num">{{if $d.MissedCall}}{{$d.MissedCall}}{{else}}[ missed-call number ]{{end}}</div>
+  <div class="flyer-body">
+    <ol lang="hi">
+      <li>इस नंबर पर मिस्ड कॉल दें — <b>पैसा नहीं लगेगा</b>, हम वापस कॉल करेंगे। <span>Free — we call you back.</span></li>
+      <li>बीप के बाद अपनी भाषा में समस्या और पास की जगह बताएँ। <span>Say the problem and a nearby landmark.</span></li>
+      <li>हम ज़िम्मेदार अधिकारी तक शिकायत पहुँचाएँगे और <b>ठीक होने तक</b> पीछा करेंगे। <span>We follow up until it is fixed.</span></li>
+      <li>"ठीक हो गया" तभी माना जाएगा जब <b>आप</b> पुष्टि करेंगे। <span>It counts as fixed only when you confirm.</span></li>
+    </ol>
+    <div class="flyer-qr"><img src="/qr.svg?ward={{$d.Ward.ID}}" alt="QR code to the report form" width="150" height="150"><small>Scan to report online{{if $d.WhatsApp}}<br>WhatsApp: {{$d.WhatsApp}}{{end}}</small></div>
+  </div>
+  <p class="flyer-foot" lang="hi">भागीरथ नागरिकों का मुफ़्त साधन है, सरकारी सेवा नहीं — {{$d.Partner}} के सहयोग से। आपका नंबर गोपनीय रहता है। दस्त में खून, पानी न पी पाना या बहुत कमज़ोरी हो तो तुरंत डॉक्टर को दिखाएँ।<br>
+  <span lang="en">Bhagirath is a free citizen tool, not a government service, run with {{$d.Partner}}. Your number stays private. {{$d.Ward.Name}}.</span></p>
+</div>
+{{end}}
