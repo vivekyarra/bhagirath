@@ -79,7 +79,7 @@ CI regenerates `RESULTS.md` from the data and the frozen rule on every commit an
 
 ## Pilot
 
-Field results are exported from the database to [pilot/METRICS.md](pilot/METRICS.md) with `bhagirath export-metrics`, including the export date. Nothing is hand-counted. The playbook for running the pilot — consent script, baseline interviews, clinic onboarding and a printable flyer — is in [docs/PILOT_PLAYBOOK.md](docs/PILOT_PLAYBOOK.md).
+Field results are exported from the database to [pilot/METRICS.md](pilot/METRICS.md) with `bhagirath export-metrics`, including the export date. Nothing is hand-counted. The public impact page also carries a **proof log**: every decided fix claim with the resident's answer, and no personal data, so anyone can check the loop rather than trust a total. Complaints taken by hand before launch (volunteer line, WhatsApp group, paper) are imported with their original dates. The playbook for running the pilot — consent script, baseline interviews, clinic onboarding and a printable flyer — is in [docs/PILOT_PLAYBOOK.md](docs/PILOT_PLAYBOOK.md).
 
 ## Try it
 
@@ -95,7 +95,7 @@ Log in as `judge` and open **▶ Demo**. Seven clicks run the whole story on fic
 6. the engineer marks it fixed with a photo → the resident presses **2** → **reopened and escalated**;
 7. a passing retest, and the resident presses **1** → **verified fixed**.
 
-You can also open any official's evidence-pack link from the Outbox, correct a transcript in the Review queue, or see the public **Impact** page.
+You can also open any official's evidence-pack link from the Outbox, correct a transcript in the Review queue, print the ward's outreach flyer with its QR code (`/flyer`), or see the public **Impact** page with its proof log of every fix claim and what the resident said.
 
 ### Run locally
 
@@ -125,6 +125,7 @@ DATABASE_URL=postgres://localhost/bhagirath?sslmode=disable ./bin/bhagirath serv
 
 ```bash
 bhagirath serve              # web + scheduled agents (default)
+bhagirath import-manual LOG.csv   # migrate the pre-launch manual log (original dates kept)
 bhagirath migrate            # apply migrations
 bhagirath seed               # demo only: reset and seed fictional data
 bhagirath backtest           # regenerate backtest/RESULTS.md from the frozen rule
@@ -138,7 +139,13 @@ bhagirath create-user NAME ROLE   # admin | partner | judge | viewer; password o
 make check    # gofmt, go vet, staticcheck, race-enabled tests against Postgres
 ```
 
-The tests cover every alert level and edge of the rule, including a property test against brute force; the full accountability loop end to end; no-answer and field-visit verification; ack-without-fix escalation; concurrent intake stress under `-race`; HTTP auth, CSRF and roles; webhook signatures (including Twilio's documented vector); official links; a byte-for-byte reproducibility check of the backtest; and the safety content of every advisory translation.
+The full strategy and recorded results are in [docs/TESTING.md](docs/TESTING.md):
+- **The rule:** every level and edge, a brute-force equivalence check, and properties for monotonicity, time-translation and input order.
+- **The whole loop:** end-to-end and edge-case tests, plus a **randomised whole-system simulation** that checks 17 database invariants after every one of 18,000 random actions. It found and fixed one real bug.
+- **Concurrency:** stress tests under `-race`, and a load test at about 5,500 requests/s with zero errors.
+- **The HTTP layer:** auth, CSRF, roles and webhook-signature tests.
+- **Fuzzers** for every parser of untrusted input.
+- **Reproducibility:** a byte-for-byte check of the backtest.
 
 ### Going live (pilot mode)
 
