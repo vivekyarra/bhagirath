@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/vivekyarra/bhagirath/internal/domain"
 	"github.com/vivekyarra/bhagirath/internal/i18n"
@@ -21,6 +22,7 @@ type Message struct {
 	Text          string
 	ReplyID       string // interactive button payload, e.g. "cb:42:yes"
 	Point         *domain.Point
+	LocationText  string // name/address attached to a shared location
 	Audio         []byte
 	AudioType     string
 	Actor         string
@@ -115,11 +117,54 @@ func (e *Engine) HandleMessage(ctx context.Context, m Message) (Outcome, error) 
 			return Outcome{}, err
 		}
 	}
+	pinKey := "pin:" + e.Vault.HashPhone(phone)
+	if m.Point != nil && strings.TrimSpace(m.Text) == "" && len(m.Audio) == 0 {
+		// A pin on its own: attach it to the sender's recent complaint that has
+		// no point, or keep it for the complaint they are about to send.
+		if known {
+			recent, err := e.Store.RecentByReporter(ctx, rep.ID, e.now().Add(-24*time.Hour))
+			if err != nil {
+				return Outcome{}, err
+			}
+			for _, c := range recent {
+				if c.Point == nil && !c.Status.Closed() {
+					out, done, err := e.locationReply(ctx, rep, c.ID, Message{Point: m.Point, Text: m.LocationText})
+					if err != nil || done {
+						return out, err
+					}
+				}
+			}
+		}
+		val := fmt.Sprintf("%f,%f,%d,%s", m.Point.Lat, m.Point.Lon, e.now().Unix(), strings.ReplaceAll(m.LocationText, ",", " "))
+		if err := e.Store.KVSet(ctx, pinKey, val, e.now()); err != nil {
+			return Outcome{}, err
+		}
+		return Outcome{Handled: "location", Detail: "pin kept for the next complaint"}, nil
+	}
 	if strings.TrimSpace(m.Text) == "" && len(m.Audio) == 0 {
 		return Outcome{Handled: "ignored", Detail: "empty"}, nil
 	}
+	if m.Point == nil {
+		if v, err := e.Store.KVGet(ctx, pinKey); err == nil {
+			var lat, lon float64
+			var at int64
+			var name string
+			parts := strings.SplitN(v, ",", 4)
+			if len(parts) >= 3 {
+				_, e1 := fmt.Sscan(parts[0], &lat)
+				_, e2 := fmt.Sscan(parts[1], &lon)
+				_, e3 := fmt.Sscan(parts[2], &at)
+				if len(parts) == 4 {
+					name = parts[3]
+				}
+				if e1 == nil && e2 == nil && e3 == nil && e.now().Unix()-at < 2*3600 {
+					m.Point, m.LocationText = &domain.Point{Lat: lat, Lon: lon}, name
+				}
+			}
+		}
+	}
 	res, err := e.Intake(ctx, Inbound{Channel: domain.ChannelWhatsApp, ProviderMsgID: m.ProviderMsgID, Phone: m.Phone, Text: m.Text,
-		Audio: m.Audio, AudioType: m.AudioType, Point: m.Point, Actor: m.Actor})
+		Audio: m.Audio, AudioType: m.AudioType, Point: m.Point, LocationText: m.LocationText, Actor: m.Actor})
 	if err != nil {
 		return Outcome{}, err
 	}

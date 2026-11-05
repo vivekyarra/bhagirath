@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/vivekyarra/bhagirath/internal/agents"
@@ -137,6 +138,7 @@ func (s *Server) reportSubmit(w http.ResponseWriter, r *http.Request) {
 
 // kickDispatcher sends queued messages promptly instead of waiting for the tick.
 func (s *Server) kickDispatcher() {
+	s.invalidateImpact()
 	s.enqueue(func(ctx contextT) { _, _ = s.Dispatcher.Run(ctx) })
 }
 
@@ -158,18 +160,52 @@ type wardStat struct {
 	MedianFixDays *float64
 }
 
-func (s *Server) impact(w http.ResponseWriter, r *http.Request) {
+// impactCache keeps the public page cheap under load: it is recomputed at
+// most every 30 seconds, and immediately after any write (see kickDispatcher).
+type impactCache struct {
+	mu    sync.Mutex
+	at    time.Time
+	m     store.Metrics
+	ts    []metrics.Target
+	wards []wardStat
+}
+
+func (s *Server) impactData(r *http.Request) (store.Metrics, []metrics.Target, []wardStat, error) {
+	c := &s.impact
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if time.Since(c.at) < 30*time.Second && !c.at.IsZero() {
+		return c.m, c.ts, c.wards, nil
+	}
 	m, ts, err := s.publicMetrics(r)
+	if err != nil {
+		return m, nil, nil, err
+	}
+	wards, err := s.wardStats(r)
+	if err != nil {
+		return m, nil, nil, err
+	}
+	c.m, c.ts, c.wards, c.at = m, ts, wards, time.Now()
+	return m, ts, wards, nil
+}
+
+func (s *Server) invalidateImpact() {
+	s.impact.mu.Lock()
+	s.impact.at = time.Time{}
+	s.impact.mu.Unlock()
+}
+
+func (s *Server) impactPage(w http.ResponseWriter, r *http.Request) {
+	m, ts, stats, err := s.impactData(r)
 	if err != nil {
 		http.Error(w, "metrics unavailable", http.StatusInternalServerError)
 		return
 	}
-	stats, _ := s.wardStats(r)
 	s.render(w, r, "impact", map[string]any{"Title": "Public impact", "M": m, "Targets": ts, "Wards": stats, "Rule": s.Engine.Rule, "FrozenTag": rule.FrozenTag})
 }
 
 func (s *Server) impactJSON(w http.ResponseWriter, r *http.Request) {
-	m, ts, err := s.publicMetrics(r)
+	m, ts, _, err := s.impactData(r)
 	if err != nil {
 		http.Error(w, "metrics unavailable", http.StatusInternalServerError)
 		return

@@ -60,6 +60,7 @@ func (s *Server) demoAction(w http.ResponseWriter, r *http.Request) {
 		redirectOK(w, r, "/app/demo", "Could not run: "+err.Error())
 		return
 	}
+	s.invalidateImpact()
 	if strings.HasPrefix(action, "story-") {
 		_ = s.Engine.Store.KVSet(ctx, "demo:done:"+action, "1", s.Engine.Clock.Now())
 	}
