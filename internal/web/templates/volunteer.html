@@ -16,5 +16,10 @@
       <select name="smartphone" style="max-width:220px"><option value="">Smartphone? unknown</option><option value="no">No smartphone</option><option value="yes">Has a smartphone</option></select></div>
     <p style="margin-top:12px"><button class="btn primary">Log complaint</button></p>
   </form>
+  <form method="post" action="/app/volunteer/import" enctype="multipart/form-data" class="card"><input type="hidden" name="csrf" value="{{.CSRF}}">
+    <h2>Migrate the manual log</h2>
+    <p class="muted">For complaints taken by phone, in a WhatsApp group or on paper before Bhagirath went live. Original dates (up to 60 days old) are kept, so complaints that are still unfixed count toward the alert rule at once. Importing the same file twice does not create duplicates. Columns: <code>date, phone, channel, language, issue, text, landmark, ward_id, consent, smartphone</code>.</p>
+    <div class="row"><input type="file" name="file" accept=".csv,text/csv" style="max-width:320px"><button class="btn">Import CSV</button></div>
+  </form>
 </div>
 {{end}}

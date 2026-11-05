@@ -10,7 +10,7 @@ The pilot is what wins: real residents, real complaints and real verified fixes.
    - Draw the ward boundary: four or more `[lat, lon]` points, taken from municipal open data or walked with the partner.
    - Add 6–12 **landmarks** residents actually say (temple, school, ration shop, water tank) with Hindi and local-language aliases. Spoken locations resolve through these.
    - Add officials **only from public sources or the partner**. If there is no direct contact, use `grievance_channel: "CM Helpline 181"`.
-3. **Go live on Day 2 even before telephony is approved.** Use the web form plus the **volunteer phone line** (dashboard → Volunteer line). Every call a volunteer logs counts as a non-smartphone complaint.
+3. **Go live on Day 2 even before telephony is approved.** Use the web form plus the **volunteer phone line** (dashboard → Volunteer). Every call a volunteer logs counts as a non-smartphone complaint. If complaints were taken before the software was running (by phone, in a WhatsApp group or on paper), keep them in a sheet with the columns `date, phone, channel, language, issue, text, landmark, ward_id, consent, smartphone`. Then import it on the Volunteer page or with `bhagirath import-manual log.csv`. Original dates (up to 60 days) are kept, and re-importing the same file never duplicates.
 4. **Advisory review.** Show the four advisory texts (`internal/i18n/i18n.go`, key `advisory`) to a doctor or public-health professional, then set `BHAGIRATH_ADVISORY_REVIEWED_BY="Dr …, …"`. Until that is done, pilot mode refuses to send advisories.
 
 ## Baseline (before switching on)

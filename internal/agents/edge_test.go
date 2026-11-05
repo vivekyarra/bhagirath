@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/vivekyarra/bhagirath/internal/agents"
+	"github.com/vivekyarra/bhagirath/internal/clock"
 	"github.com/vivekyarra/bhagirath/internal/config"
 	"github.com/vivekyarra/bhagirath/internal/domain"
 	"github.com/vivekyarra/bhagirath/internal/store"
@@ -321,5 +322,43 @@ func TestOfficialAcknowledgesOnWhatsApp(t *testing.T) {
 	}
 	if _, err := h.d.Run(h.ctx); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestImportManualLogKeepsDatesAndIsIdempotent(t *testing.T) {
+	h := newHarness(t)
+	day := func(d int) string {
+		return h.clk.Now().Add(-time.Duration(d) * 24 * time.Hour).In(clock.IST).Format("2006-01-02")
+	}
+	csvText := "date,phone,channel,language,issue,text,landmark,ward_id,consent,smartphone\n" +
+		day(10) + ",+910000000041,volunteer,hi,,गंदा पानी आ रहा है,शिव मंदिर,,yes,no\n" +
+		day(9) + ",+910000000042,whatsapp,hi,foul_smell,बदबू,,demo-urban-12,no,\n" +
+		day(9) + ",+910000000041,volunteer,hi,,फिर से गंदा पानी,शिव मंदिर,,yes,no\n" +
+		day(90) + ",+910000000043,volunteer,hi,,old,,,yes,\n" +
+		"not-a-date,,,,,x,,,,\n"
+	res, err := h.e.ImportManualLog(h.ctx, strings.NewReader(csvText), "test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.Imported != 2 || res.Duplicates != 1 || len(res.Errors) != 2 {
+		t.Fatalf("result %+v", res)
+	}
+	cs, _ := h.st.ListComplaints(h.ctx, store.ComplaintFilter{})
+	for _, c := range cs {
+		if h.clk.Now().Sub(c.CreatedAt) < 8*24*time.Hour {
+			t.Fatalf("original date not kept: %v", c.CreatedAt)
+		}
+	}
+	// Ten-day-old unfixed complaints trigger the stale-complaint signal at once.
+	if a := h.alert(); a.Level != domain.LevelWatch || !strings.Contains(a.ReasonText, "open for more than 7 days") {
+		t.Fatalf("alert after import: %v %q", a.Level, a.ReasonText)
+	}
+	// No WhatsApp acknowledgements or consent prompts for migrated entries.
+	if msgs, _ := h.st.ListMessages(h.ctx, store.MessageFilter{Kind: "consent"}); len(msgs) != 0 {
+		t.Fatal("consent prompt sent for a migrated entry")
+	}
+	again, _ := h.e.ImportManualLog(h.ctx, strings.NewReader(csvText), "test")
+	if again.Imported != 0 {
+		t.Fatalf("re-import created complaints: %+v", again)
 	}
 }

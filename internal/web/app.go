@@ -846,3 +846,25 @@ func safeInline(ct string) bool {
 	}
 	return false
 }
+
+// manualImport migrates the pre-launch manual log (volunteer line, WhatsApp
+// group, paper register) with original dates preserved.
+func (s *Server) manualImport(w http.ResponseWriter, r *http.Request) {
+	f, _, err := r.FormFile("file")
+	if err != nil {
+		redirectOK(w, r, "/app/volunteer", "Choose a CSV file.")
+		return
+	}
+	defer f.Close()
+	res, err := s.Engine.ImportManualLog(r.Context(), f, actor(r))
+	if err != nil {
+		redirectOK(w, r, "/app/volunteer", "Not imported: "+err.Error())
+		return
+	}
+	s.kickDispatcher()
+	msg := fmt.Sprintf("Imported %d complaints (%d already present).", res.Imported, res.Duplicates)
+	if len(res.Errors) > 0 {
+		msg += fmt.Sprintf(" Not imported: %d rows — %s", len(res.Errors), strings.Join(res.Errors[:min(3, len(res.Errors))], "; "))
+	}
+	redirectOK(w, r, "/app/complaints", msg)
+}

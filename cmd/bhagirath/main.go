@@ -5,6 +5,7 @@
 //	bhagirath seed                     (demo) reset and seed fictional data
 //	bhagirath export-metrics [-o f]    write pilot/METRICS.md from the database
 //	bhagirath create-user NAME ROLE    create a dashboard user (password on stdin)
+//	bhagirath import-manual LOG.csv    migrate the pre-launch manual complaint log
 //	bhagirath backtest [flags]         replay outbreak timelines through the frozen rule
 //	bhagirath rule                     print the rule version and SHA-256
 //	bhagirath version
@@ -98,6 +99,25 @@ func run(args []string) error {
 			return err
 		}
 		return exportMetrics(ctx, app, *out)
+	case "import-manual":
+		if len(args) != 1 {
+			return errors.New("usage: bhagirath import-manual LOG.csv   (columns: " + agents.ManualLogColumns + ")")
+		}
+		f, err := os.Open(args[0])
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		res, err := app.engine.ImportManualLog(ctx, f, "cli:import-manual")
+		if err != nil {
+			return err
+		}
+		fmt.Printf("imported %d, already present %d, errors %d\n", res.Imported, res.Duplicates, len(res.Errors))
+		for _, e := range res.Errors {
+			fmt.Println("  ", e)
+		}
+		_, err = app.dispatcher.Run(ctx)
+		return err
 	case "create-user":
 		if len(args) != 2 {
 			return errors.New("usage: bhagirath create-user NAME admin|partner|judge|viewer  (password on stdin)")
