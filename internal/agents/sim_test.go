@@ -171,13 +171,13 @@ func checkInvariants(t *testing.T, h *harness, fail func(string, ...any)) {
 		"open escalation on a resolved alert": `SELECT count(*) FROM escalation e JOIN alert a ON a.id=e.alert_id
 			WHERE e.outcome IN ('pending','acknowledged') AND a.status='resolved'`,
 		"escalation deadline not after it was sent": `SELECT count(*) FROM escalation WHERE deadline_at <= sent_at`,
-		"more than one active alert in a ward": `SELECT count(*) FROM (SELECT ward_id FROM alert WHERE status='active' GROUP BY ward_id HAVING count(*) > 1) x`,
-		"advisory to a household without consent": `SELECT count(*) FROM advisory a JOIN reporter r ON r.id=a.reporter_id WHERE r.consent_at IS NULL`,
-		"advisory for an alert below Warning": `SELECT count(*) FROM advisory WHERE level NOT IN ('warning','critical')`,
-		"message stuck in the outbox (demo mode)": `SELECT count(*) FROM outbound_message WHERE status IN ('queued','failed')`,
-		"phone number in plain text in the outbox": `SELECT count(*) FROM outbound_message WHERE body ~ '0000\d{5}' OR recipient_label ~ '0000\d{5}'`,
-		"complaint escalated without a ward": `SELECT count(*) FROM complaint WHERE status='escalated' AND ward_id IS NULL`,
-		"declined reporter still holds a number": `SELECT count(*) FROM reporter WHERE consent_declined AND phone_enc IS NOT NULL AND consent_at IS NULL`,
+		"more than one active alert in a ward":      `SELECT count(*) FROM (SELECT ward_id FROM alert WHERE status='active' GROUP BY ward_id HAVING count(*) > 1) x`,
+		"advisory to a household without consent":   `SELECT count(*) FROM advisory a JOIN reporter r ON r.id=a.reporter_id WHERE r.consent_at IS NULL`,
+		"advisory for an alert below Warning":       `SELECT count(*) FROM advisory WHERE level NOT IN ('warning','critical')`,
+		"message stuck in the outbox (demo mode)":   `SELECT count(*) FROM outbound_message WHERE status IN ('queued','failed')`,
+		"phone number in plain text in the outbox":  `SELECT count(*) FROM outbound_message WHERE body ~ '0000\d{5}' OR recipient_label ~ '0000\d{5}'`,
+		"complaint escalated without a ward":        `SELECT count(*) FROM complaint WHERE status='escalated' AND ward_id IS NULL`,
+		"declined reporter still holds a number":    `SELECT count(*) FROM reporter WHERE consent_declined AND phone_enc IS NOT NULL AND consent_at IS NULL`,
 		"peak level below current level": `SELECT count(*) FROM alert WHERE
 			(CASE peak_level WHEN 'watch' THEN 1 WHEN 'warning' THEN 2 ELSE 3 END) < (CASE level WHEN 'watch' THEN 1 WHEN 'warning' THEN 2 ELSE 3 END)`,
 	}
